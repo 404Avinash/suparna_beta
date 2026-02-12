@@ -1,0 +1,12 @@
+# Project KALPANA - Swift-Inspired Drone Path Optimization
+# Core
+numpy>=1.24.0
+shapely>=2.0.0
+networkx>=3.0
+
+# Visualization
+matplotlib>=3.7.0
+pygame>=2.5.0
+
+# Utilities
+dataclasses-json>=0.6.0
