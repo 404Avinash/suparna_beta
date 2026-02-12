@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SUPARNA - 3D Mission Visualizer</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #0a0e17; color: #ddd; font-family: 'Segoe UI', sans-serif; overflow: hidden; }
+  #canvas { display: block; }
+
+  /* Side panel */
+  #panel {
+    position: fixed; top: 0; right: 0;
+    width: 260px; height: 100vh;
+    background: rgba(12, 16, 24, 0.92);
+    border-left: 1px solid #1e2a3a;
+    padding: 24px 18px;
+    z-index: 10;
+    backdrop-filter: blur(12px);
+    overflow-y: auto;
+  }
+  #panel h1 { font-size: 22px; color: #00d4ff; margin-bottom: 4px; letter-spacing: 2px; }
+  #panel .sub { font-size: 11px; color: #556; margin-bottom: 20px; }
+  .stat { margin-bottom: 14px; }
+  .stat label { font-size: 11px; color: #667; text-transform: uppercase; letter-spacing: 1px; }
+  .stat .val { font-size: 20px; font-weight: 700; color: #eee; }
+  .stat .val.accent { color: #00d4ff; }
+  .stat .val.green { color: #1db954; }
+  .stat .val.warn { color: #f0a030; }
+
+  .bar-wrap { width: 100%; height: 10px; background: #1a1f2e; border-radius: 5px; margin-top: 4px; }
+  .bar-fill { height: 100%; border-radius: 5px; transition: width 0.3s; }
+  .bar-fill.green { background: linear-gradient(90deg, #1db954, #1ed760); }
+  .bar-fill.cyan { background: linear-gradient(90deg, #0090b0, #00d4ff); }
+  .bar-fill.warn { background: linear-gradient(90deg, #c09030, #f0c040); }
+  .bar-fill.danger { background: linear-gradient(90deg, #c03030, #e04040); }
+
+  .divider { border: none; border-top: 1px solid #1e2a3a; margin: 16px 0; }
+
+  .checklist { list-style: none; padding: 0; }
+  .checklist li { font-size: 13px; padding: 3px 0; color: #556; }
+  .checklist li.done { color: #1db954; }
+  .checklist li.active { color: #00d4ff; font-weight: 600; }
+
+  .controls { margin-top: 16px; }
+  .btn {
+    display: inline-block; padding: 6px 14px; margin: 3px;
+    background: #1a1f2e; border: 1px solid #2a3040; border-radius: 6px;
+    color: #aab; font-size: 12px; cursor: pointer; transition: all 0.2s;
+  }
+  .btn:hover { background: #252b3a; border-color: #00d4ff; color: #fff; }
+  .btn.active { background: #00d4ff22; border-color: #00d4ff; color: #00d4ff; }
+
+  .algo-tag {
+    display: inline-block; font-size: 10px; padding: 2px 8px; margin: 2px;
+    border-radius: 10px; border: 1px solid; color: #aab;
+  }
+
+  /* Loading */
+  #loading {
+    position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+    background: #0a0e17; display: flex; align-items: center; justify-content: center;
+    z-index: 100; flex-direction: column;
+  }
+  #loading h2 { color: #00d4ff; font-size: 28px; margin-bottom: 10px; }
+  #loading p { color: #556; font-size: 14px; }
+  .spinner { width: 40px; height: 40px; border: 3px solid #1a1f2e;
+    border-top: 3px solid #00d4ff; border-radius: 50%;
+    animation: spin 1s linear infinite; margin-bottom: 16px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div id="loading">
+  <div class="spinner"></div>
+  <h2>SUPARNA</h2>
+  <p>Loading mission data...</p>
+</div>
+
+<div id="panel">
+  <h1>SUPARNA</h1>
+  <div class="sub">3D Mission Visualizer</div>
+
+  <div class="stat">
+    <label>Status</label>
+    <div class="val accent" id="status">PLANNING</div>
+  </div>
+
+  <div class="stat">
+    <label>Coverage</label>
+    <div class="val green" id="coverage">0.0%</div>
+    <div class="bar-wrap"><div class="bar-fill cyan" id="covBar" style="width:0%"></div></div>
+  </div>
+
+  <div class="stat">
+    <label>Battery</label>
+    <div class="val" id="battery">100%</div>
+    <div class="bar-wrap"><div class="bar-fill green" id="batBar" style="width:100%"></div></div>
+  </div>
+
+  <hr class="divider">
+
+  <div class="stat">
+    <label>Loiters</label>
+    <div class="val" id="loiterCount">0 / 0</div>
+  </div>
+  <div class="stat">
+    <label>Distance</label>
+    <div class="val" id="distance">0 m</div>
+  </div>
+  <div class="stat">
+    <label>Speed</label>
+    <div class="val" id="speedDisp">2.0x</div>
+  </div>
+
+  <hr class="divider">
+
+  <label style="font-size:11px;color:#667;text-transform:uppercase;letter-spacing:1px">Mission</label>
+  <ul class="checklist" id="checklist"></ul>
+
+  <hr class="divider">
+
+  <label style="font-size:11px;color:#667;text-transform:uppercase;letter-spacing:1px">Algorithms</label>
+  <div style="margin-top:6px">
+    <span class="algo-tag" style="border-color:#1db954;color:#1db954">Greedy Set Cover</span>
+    <span class="algo-tag" style="border-color:#00d4ff;color:#00d4ff">Dubins Curves</span>
+    <span class="algo-tag" style="border-color:#f0c040;color:#f0c040">A* Search</span>
+    <span class="algo-tag" style="border-color:#e04040;color:#e04040">Bug2 Avoidance</span>
+    <span class="algo-tag" style="border-color:#c080ff;color:#c080ff">TSP Heuristic</span>
+  </div>
+
+  <hr class="divider">
+
+  <div class="controls">
+    <div class="btn" id="btnPlay" onclick="togglePause()">⏸ Pause</div>
+    <div class="btn" onclick="changeSpeed(-0.5)">- Slow</div>
+    <div class="btn" onclick="changeSpeed(0.5)">+ Fast</div>
+    <div class="btn" onclick="resetMission()">↻ Reset</div>
+    <div class="btn" onclick="newMission()">⟳ New Map</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+<script>
+// ── Globals ──────────────────────────────────────────────────────────────
+let scene, camera, renderer, controls;
+let missionData = null;
+let drone, droneMesh, trailLine, trailPoints = [];
+let loiterMeshes = [], obstacleMeshes = [], coverageMeshes = [];
+let groundPlane, gridHelper;
+
+// Simulation state
+let simTime = 0, speed = 2.0, paused = false;
+let wpIdx = 0, state = 'FLY'; // FLY | LOITER | DONE
+let pos = {x:0, y:0, z:15}, heading = 0;
+let loiterCenter = null, loiterAngle = 0, loiterRevs = 0, loiterR = 60;
+let nLoitersDone = 0, distance = 0, battery = 100;
+let avoiding = false, avoidDir = 1;
+let coveredSet = new Set();
+const SPD = 35, TURN_RATE = 2.5;
+
+// ── Init ─────────────────────────────────────────────────────────────────
+function init() {
+  scene = new THREE.Scene();
+  scene.background = new THREE.Color(0x0a0e17);
+  scene.fog = new THREE.Fog(0x0a0e17, 800, 1800);
+
+  // Camera
+  camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 260) / window.innerHeight, 1, 5000);
+  camera.position.set(500, 800, 600);
+  camera.lookAt(500, 0, 350);
+
+  // Renderer
+  renderer = new THREE.WebGLRenderer({ antialias: true });
+  renderer.setSize(window.innerWidth - 260, window.innerHeight);
+  renderer.shadowMap.enabled = true;
+  renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+  document.body.insertBefore(renderer.domElement, document.getElementById('panel'));
+  renderer.domElement.id = 'canvas';
+
+  // Controls
+  controls = new THREE.OrbitControls(camera, renderer.domElement);
+  controls.target.set(500, 0, 350);
+  controls.enableDamping = true;
+  controls.dampingFactor = 0.08;
+  controls.maxPolarAngle = Math.PI / 2.1;
+  controls.minDistance = 200;
+  controls.maxDistance = 2000;
+  controls.update();
+
+  // Lighting
+  const ambient = new THREE.AmbientLight(0x334466, 0.6);
+  scene.add(ambient);
+
+  const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
+  dirLight.position.set(400, 600, 300);
+  dirLight.castShadow = true;
+  dirLight.shadow.camera.near = 1;
+  dirLight.shadow.camera.far = 2000;
+  dirLight.shadow.camera.left = -600;
+  dirLight.shadow.camera.right = 600;
+  dirLight.shadow.camera.top = 600;
+  dirLight.shadow.camera.bottom = -600;
+  dirLight.shadow.mapSize.width = 2048;
+  dirLight.shadow.mapSize.height = 2048;
+  scene.add(dirLight);
+
+  const hemiLight = new THREE.HemisphereLight(0x003355, 0x0a0e17, 0.3);
+  scene.add(hemiLight);
+
+  // Handle resize
+  window.addEventListener('resize', () => {
+    camera.aspect = (window.innerWidth - 260) / window.innerHeight;
+    camera.updateProjectionMatrix();
+    renderer.setSize(window.innerWidth - 260, window.innerHeight);
+  });
+}
+
+// ── Build Scene From Mission Data ────────────────────────────────────────
+function buildScene(data) {
+  // Clear old objects
+  [...loiterMeshes, ...obstacleMeshes, ...coverageMeshes].forEach(m => scene.remove(m));
+  if (groundPlane) scene.remove(groundPlane);
+  if (gridHelper) scene.remove(gridHelper);
+  if (droneMesh) scene.remove(droneMesh);
+  if (trailLine) scene.remove(trailLine);
+  loiterMeshes = []; obstacleMeshes = []; coverageMeshes = [];
+
+  const W = data.map.width, H = data.map.height;
+
+  // Ground plane
+  const groundGeo = new THREE.PlaneGeometry(W, H);
+  const groundMat = new THREE.MeshStandardMaterial({
+    color: 0x161a24, roughness: 0.9, metalness: 0.1
+  });
+  groundPlane = new THREE.Mesh(groundGeo, groundMat);
+  groundPlane.rotation.x = -Math.PI / 2;
+  groundPlane.position.set(W/2, -0.5, H/2);
+  groundPlane.receiveShadow = true;
+  scene.add(groundPlane);
+
+  // Grid
+  gridHelper = new THREE.GridHelper(Math.max(W,H), 40, 0x1a2030, 0x141820);
+  gridHelper.position.set(W/2, 0, H/2);
+  scene.add(gridHelper);
+
+  // Obstacles
+  data.obstacles.forEach(obs => {
+    const h = obs.is_no_fly ? 15 : 30 + obs.radius * 0.3;
+    const color = obs.is_no_fly ? 0x802020 : 0x8b3030;
+
+    // Main body
+    const geo = new THREE.CylinderGeometry(obs.radius, obs.radius * 1.1, h, 24);
+    const mat = new THREE.MeshStandardMaterial({
+      color: color, roughness: 0.6, metalness: 0.2, transparent: true, opacity: 0.85
+    });
+    const mesh = new THREE.Mesh(geo, mat);
+    mesh.position.set(obs.x, h/2, obs.y);
+    mesh.castShadow = true;
+    scene.add(mesh);
+    obstacleMeshes.push(mesh);
+
+    // Safety margin ring
+    const ringGeo = new THREE.RingGeometry(obs.radius + 18, obs.radius + 22, 32);
+    const ringMat = new THREE.MeshBasicMaterial({
+      color: obs.is_no_fly ? 0x601010 : 0x401515, side: THREE.DoubleSide,
+      transparent: true, opacity: 0.4
+    });
+    const ring = new THREE.Mesh(ringGeo, ringMat);
+    ring.rotation.x = -Math.PI / 2;
+    ring.position.set(obs.x, 1, obs.y);
+    scene.add(ring);
+    obstacleMeshes.push(ring);
+
+    // Glow on top
+    const glowGeo = new THREE.CircleGeometry(obs.radius * 0.8, 20);
+    const glowMat = new THREE.MeshBasicMaterial({
+      color: 0xff3030, transparent: true, opacity: 0.15
+    });
+    const glow = new THREE.Mesh(glowGeo, glowMat);
+    glow.rotation.x = -Math.PI / 2;
+    glow.position.set(obs.x, h + 1, obs.y);
+    scene.add(glow);
+    obstacleMeshes.push(glow);
+  });
+
+  // Loiter targets
+  data.loiters.forEach((l, i) => {
+    // Torus ring
+    const torusGeo = new THREE.TorusGeometry(l.radius, 1.5, 8, 48);
+    const torusMat = new THREE.MeshBasicMaterial({
+      color: 0xffb040, transparent: true, opacity: 0.5
+    });
+    const torus = new THREE.Mesh(torusGeo, torusMat);
+    torus.rotation.x = -Math.PI / 2;
+    torus.position.set(l.x, 15, l.y);
+    scene.add(torus);
+    loiterMeshes.push(torus);
+
+    // Vertical dashed line
+    const lineGeo = new THREE.BufferGeometry().setFromPoints([
+      new THREE.Vector3(l.x, 0, l.y),
+      new THREE.Vector3(l.x, 15, l.y),
+    ]);
+    const lineMat = new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.3 });
+    const line = new THREE.Line(lineGeo, lineMat);
+    scene.add(line);
+    loiterMeshes.push(line);
+  });
+
+  // Home marker
+  const homeGeo = new THREE.ConeGeometry(8, 20, 6);
+  const homeMat = new THREE.MeshStandardMaterial({ color: 0x1db954, emissive: 0x0a5020 });
+  const homeMesh = new THREE.Mesh(homeGeo, homeMat);
+  homeMesh.position.set(data.home.x, 10, data.home.y);
+  scene.add(homeMesh);
+  obstacleMeshes.push(homeMesh);
+
+  // Drone
+  const droneGroup = new THREE.Group();
+
+  // Body
+  const bodyGeo = new THREE.ConeGeometry(6, 18, 4);
+  const bodyMat = new THREE.MeshStandardMaterial({
+    color: 0x00d4ff, emissive: 0x004466, metalness: 0.5, roughness: 0.3
+  });
+  const body = new THREE.Mesh(bodyGeo, bodyMat);
+  body.rotation.z = Math.PI / 2;
+  body.rotation.y = Math.PI / 2;
+  droneGroup.add(body);
+
+  // Glow ring
+  const droneGlow = new THREE.Mesh(
+    new THREE.RingGeometry(10, 14, 20),
+    new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+  );
+  droneGlow.rotation.x = -Math.PI / 2;
+  droneGroup.add(droneGlow);
+
+  droneMesh = droneGroup;
+  droneMesh.position.set(data.home.x, 15, data.home.y);
+  scene.add(droneMesh);
+
+  // Trail
+  const trailGeo = new THREE.BufferGeometry();
+  const trailMat = new THREE.LineBasicMaterial({ color: 0x00a0c0, transparent: true, opacity: 0.6 });
+  trailLine = new THREE.Line(trailGeo, trailMat);
+  scene.add(trailLine);
+
+  // Path preview lines
+  const pathPts = data.waypoints.map(w => new THREE.Vector3(w.x, 12, w.y));
+  const pathGeo = new THREE.BufferGeometry().setFromPoints(pathPts);
+  const pathMat = new THREE.LineDashedMaterial({
+    color: 0x2a4060, dashSize: 10, gapSize: 10, transparent: true, opacity: 0.4
+  });
+  const pathLine = new THREE.Line(pathGeo, pathMat);
+  pathLine.computeLineDistances();
+  scene.add(pathLine);
+  obstacleMeshes.push(pathLine);
+
+  // Update camera target
+  controls.target.set(W/2, 0, H/2);
+  camera.position.set(W/2, Math.max(W,H) * 0.9, H/2 + Math.max(W,H) * 0.5);
+  controls.update();
+}
+
+// ── Simulation ───────────────────────────────────────────────────────────
+function inObstacle(px, py) {
+  if (!missionData) return false;
+  for (const obs of missionData.obstacles) {
+    const dx = px - obs.x, dy = py - obs.y;
+    if (Math.sqrt(dx*dx + dy*dy) < obs.radius + 30) return true;
+  }
+  return false;
+}
+
+function checkAhead(h, dist) {
+  const tx = pos.x + dist * Math.cos(h);
+  const ty = pos.y + dist * Math.sin(h);
+  return !inObstacle(tx, ty);
+}
+
+function normalizeAngle(a) {
+  while (a > Math.PI) a -= 2 * Math.PI;
+  while (a < -Math.PI) a += 2 * Math.PI;
+  return a;
+}
+
+function updateSim(dt) {
+  if (paused || state === 'DONE' || !missionData) return;
+
+  const wps = missionData.waypoints;
+
+  if (state === 'LOITER') {
+    if (!loiterCenter) { state = 'FLY'; return; }
+    const w = SPD / loiterR;
+    loiterAngle += w * dt;
+    loiterRevs += w * dt / (2 * Math.PI);
+    pos.x = loiterCenter.x + loiterR * Math.cos(loiterAngle);
+    pos.y = loiterCenter.y + loiterR * Math.sin(loiterAngle);
+    heading = normalizeAngle(loiterAngle + Math.PI / 2);
+    distance += SPD * dt;
+    battery -= 0.05 * dt;
+
+    // Coverage during loiter
+    markCoverage(loiterCenter.x, loiterCenter.y, loiterR + 20);
+
+    if (loiterRevs >= 1.0) {
+      nLoitersDone++;
+      state = 'FLY';
+      loiterCenter = null;
+      wpIdx++;
+    }
+    updateDroneMesh();
+    return;
+  }
+
+  if (wpIdx >= wps.length) { state = 'DONE'; return; }
+
+  const target = wps[wpIdx];
+  const th = Math.atan2(target.y - pos.y, target.x - pos.x);
+
+  // Obstacle avoidance
+  let desired;
+  if (checkAhead(th, 50)) {
+    avoiding = false;
+    desired = th;
+  } else {
+    if (!avoiding) {
+      avoiding = true;
+      for (const obs of missionData.obstacles) {
+        const dx = obs.x - pos.x, dy = obs.y - pos.y;
+        if (Math.sqrt(dx*dx+dy*dy) < 200) {
+          const toObs = Math.atan2(dy, dx);
+          avoidDir = normalizeAngle(th - toObs) > 0 ? 1 : -1;
+          break;
+        }
+      }
+    }
+    desired = heading + avoidDir * 0.8;
+    for (const ta of [0.3, 0.5, 0.7]) {
+      const testH = normalizeAngle(heading + avoidDir * ta);
+      if (checkAhead(testH, 60) && Math.abs(normalizeAngle(th - testH)) < 1.5) {
+        desired = testH;
+        break;
+      }
+    }
+  }
+
+  const err = normalizeAngle(desired - heading);
+  const mt = TURN_RATE * dt;
+  if (Math.abs(err) > mt) heading += err > 0 ? mt : -mt;
+  else heading = desired;
+  heading = normalizeAngle(heading);
+
+  const d = SPD * dt;
+  const nx = pos.x + d * Math.cos(heading);
+  const ny = pos.y + d * Math.sin(heading);
+  if (!inObstacle(nx, ny)) {
+    pos.x = nx; pos.y = ny;
+    distance += d;
+  } else {
+    heading += avoidDir * 0.5;
+  }
+  battery -= 0.08 * dt;
+
+  markCoverage(pos.x, pos.y, 40);
+
+  // Check waypoint reached
+  const dx = target.x - pos.x, dy = target.y - pos.y;
+  if (Math.sqrt(dx*dx + dy*dy) < 20) {
+    avoiding = false;
+    if (target.type === 'loiter') {
+      state = 'LOITER';
+      loiterCenter = { x: target.x, y: target.y };
+      loiterAngle = heading - Math.PI / 2;
+      loiterRevs = 0;
+      loiterR = target.radius || 60;
+    } else {
+      wpIdx++;
+    }
+  }
+
+  updateDroneMesh();
+}
+
+function markCoverage(cx, cy, radius) {
+  const res = missionData.map.resolution || 10;
+  const gcx = Math.floor(cx / res), gcy = Math.floor(cy / res);
+  const rc = Math.ceil(radius / res);
+  for (let dx = -rc; dx <= rc; dx++) {
+    for (let dy = -rc; dy <= rc; dy++) {
+      if (dx*dx + dy*dy > rc*rc) continue;
+      const nx = gcx + dx, ny = gcy + dy;
+      const key = nx + ',' + ny;
+      if (coveredSet.has(key)) continue;
+      const wx = nx * res, wy = ny * res;
+      if (wx < 0 || wx >= missionData.map.width || wy < 0 || wy >= missionData.map.height) continue;
+      if (inObstacle(wx, wy)) continue;
+      coveredSet.add(key);
+
+      // Add coverage mesh (small green tile)
+      const geo = new THREE.PlaneGeometry(res, res);
+      const mat = new THREE.MeshBasicMaterial({
+        color: 0x1db954, transparent: true, opacity: 0.35, side: THREE.DoubleSide
+      });
+      const tile = new THREE.Mesh(geo, mat);
+      tile.rotation.x = -Math.PI / 2;
+      tile.position.set(wx + res/2, 0.5, wy + res/2);
+      scene.add(tile);
+      coverageMeshes.push(tile);
+    }
+  }
+}
+
+function updateDroneMesh() {
+  if (!droneMesh) return;
+  droneMesh.position.set(pos.x, 15 + Math.sin(simTime * 3) * 2, pos.y);
+  droneMesh.rotation.y = -heading + Math.PI / 2;
+
+  // Update trail
+  trailPoints.push(new THREE.Vector3(pos.x, 14, pos.y));
+  if (trailPoints.length > 2000) trailPoints.shift();
+  if (trailLine && trailPoints.length > 1) {
+    trailLine.geometry.dispose();
+    trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints);
+  }
+}
+
+// ── UI Updates ───────────────────────────────────────────────────────────
+function updateUI() {
+  if (!missionData) return;
+  const totalLoiters = missionData.loiters.length;
+  const W = missionData.map.width, H = missionData.map.height;
+  const res = missionData.map.resolution || 10;
+  const totalCells = Math.floor(W/res) * Math.floor(H/res);
+  const covPct = Math.min(100, (coveredSet.size / totalCells) * 100);
+
+  document.getElementById('status').textContent =
+    state === 'DONE' ? 'MISSION COMPLETE' :
+    state === 'LOITER' ? `LOITERING (${nLoitersDone+1}/${totalLoiters})` :
+    wpIdx >= missionData.waypoints.length - 1 ? 'RETURNING HOME' :
+    `EN ROUTE → L${nLoitersDone+1}`;
+
+  document.getElementById('status').className =
+    'val ' + (state === 'DONE' ? 'green' : state === 'LOITER' ? 'warn' : 'accent');
+
+  document.getElementById('coverage').textContent = covPct.toFixed(1) + '%';
+  document.getElementById('covBar').style.width = covPct + '%';
+
+  const bat = Math.max(0, battery);
+  document.getElementById('battery').textContent = bat.toFixed(0) + '%';
+  document.getElementById('batBar').style.width = bat + '%';
+  document.getElementById('batBar').className =
+    'bar-fill ' + (bat < 20 ? 'danger' : bat < 40 ? 'warn' : 'green');
+
+  document.getElementById('loiterCount').textContent = `${nLoitersDone} / ${totalLoiters}`;
+  document.getElementById('distance').textContent = distance.toFixed(0) + ' m';
+  document.getElementById('speedDisp').textContent = speed.toFixed(1) + 'x';
+
+  // Checklist
+  const cl = document.getElementById('checklist');
+  cl.innerHTML = '';
+  for (let i = 0; i < totalLoiters; i++) {
+    const li = document.createElement('li');
+    const done = i < nLoitersDone;
+    const active = i === nLoitersDone && state === 'LOITER';
+    li.className = done ? 'done' : active ? 'active' : '';
+    li.textContent = (done ? '✓' : active ? '▶' : '○') + ` Loiter ${i+1}`;
+    cl.appendChild(li);
+  }
+  const retLi = document.createElement('li');
+  retLi.className = state === 'DONE' ? 'done' : '';
+  retLi.textContent = (state === 'DONE' ? '✓' : '○') + ' Return HOME';
+  cl.appendChild(retLi);
+
+  // Update loiter ring colors
+  missionData.loiters.forEach((l, i) => {
+    const mesh = loiterMeshes[i * 2]; // Every other is a torus
+    if (!mesh) return;
+    if (i < nLoitersDone) {
+      mesh.material.color.set(0x1db954);
+      mesh.material.opacity = 0.7;
+    } else if (i === nLoitersDone && state === 'LOITER') {
+      mesh.material.color.set(0x00d4ff);
+      mesh.material.opacity = 0.8;
+    }
+  });
+}
+
+// ── Controls ─────────────────────────────────────────────────────────────
+function togglePause() {
+  paused = !paused;
+  document.getElementById('btnPlay').textContent = paused ? '▶ Play' : '⏸ Pause';
+  document.getElementById('btnPlay').className = paused ? 'btn active' : 'btn';
+}
+
+function changeSpeed(delta) {
+  speed = Math.max(0.5, Math.min(10, speed + delta));
+}
+
+function resetMission() {
+  if (!missionData) return;
+  wpIdx = 0; state = 'FLY'; nLoitersDone = 0;
+  distance = 0; battery = 100; avoiding = false;
+  pos = { x: missionData.home.x, y: missionData.home.y, z: 15 };
+  heading = 0; trailPoints = [];
+  coveredSet.clear();
+  coverageMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+  coverageMeshes = [];
+  loiterMeshes.forEach((m, i) => {
+    if (i % 2 === 0 && m.material) { m.material.color.set(0xffb040); m.material.opacity = 0.5; }
+  });
+}
+
+async function newMission() {
+  // Generate new seed and re-export
+  const seed = Math.floor(Math.random() * 10000);
+  document.getElementById('loading').style.display = 'flex';
+  document.getElementById('loading').querySelector('p').textContent =
+    `Generating new map (seed: ${seed})...`;
+
+  // Try to call Python exporter
+  try {
+    const resp = await fetch(`mission.json?t=${Date.now()}`);
+    if (resp.ok) {
+      missionData = await resp.json();
+      resetMission();
+      buildScene(missionData);
+      document.getElementById('loading').style.display = 'none';
+    }
+  } catch(e) {
+    document.getElementById('loading').querySelector('p').textContent =
+      'Run: python export_mission.py --seed ' + seed;
+    setTimeout(() => { location.reload(); }, 3000);
+  }
+}
+
+// ── Animation Loop ───────────────────────────────────────────────────────
+function animate() {
+  requestAnimationFrame(animate);
+
+  const dt = 1/60;
+  simTime += dt;
+
+  // Simulation steps
+  for (let i = 0; i < Math.ceil(speed * 2); i++) {
+    updateSim(dt * 0.5);
+  }
+
+  // Animate obstacle glow
+  obstacleMeshes.forEach(m => {
+    if (m.material && m.material.emissive) {
+      // subtle pulse
+    }
+  });
+
+  controls.update();
+  updateUI();
+  renderer.render(scene, camera);
+}
+
+// ── Load & Start ─────────────────────────────────────────────────────────
+async function start() {
+  init();
+
+  try {
+    const resp = await fetch('mission.json');
+    missionData = await resp.json();
+  } catch (e) {
+    document.getElementById('loading').querySelector('p').textContent =
+      'Run: python export_mission.py first!';
+    return;
+  }
+
+  pos = { x: missionData.home.x, y: missionData.home.y, z: 15 };
+  buildScene(missionData);
+  document.getElementById('loading').style.display = 'none';
+  animate();
+}
+
+start();
+</script>
+</body>
+</html>
