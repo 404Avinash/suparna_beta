@@ -579,23 +579,21 @@
       const distToTarget = Math.sqrt((target.x - pos.x) ** 2 + (target.y - pos.y) ** 2);
       const th = Math.atan2(target.y - pos.y, target.x - pos.x);
 
-      // Stuck detection: if no progress for 2 seconds, force direct flight
+      // Stuck detection with direction-flip recovery
       stuckTimer += dt;
       const progressDelta = Math.abs(distToTarget - lastProgressDist);
       if (progressDelta > 5) { stuckTimer = 0; lastProgressDist = distToTarget; }
-      const forceBypass = stuckTimer > 2.0;
+
+      // Flip avoidance direction after 2s stuck, force brief bypass after 5s
+      if (stuckTimer > 2.0 && stuckTimer < 2.1) { avoidDir *= -1; }
+      const forceBurst = stuckTimer > 5.0 && stuckTimer < 5.3;
+      if (stuckTimer > 5.3) { stuckTimer = 0; } // reset cycle
 
       let desired;
 
-      if (isReturning) {
-        // RETURNING HOME: fly direct, skip all obstacle avoidance
-        // Drone is at altitude — can safely fly over obstacles
-        desired = th;
-        avoiding = false;
-      } else if (forceBypass || checkAhead(th, 50)) {
+      if (forceBurst || checkAhead(th, 50)) {
         avoiding = false;
         desired = th;
-        if (forceBypass) stuckTimer = 0;
       } else {
         if (!avoiding) {
           avoiding = true;
@@ -628,11 +626,7 @@
       const nx = pos.x + d * Math.cos(heading);
       const ny = pos.y + d * Math.sin(heading);
 
-      if (isReturning) {
-        // Always move when returning home
-        pos.x = nx; pos.y = ny;
-        distance += d;
-      } else if (!inObstacle(nx, ny)) {
+      if (!inObstacle(nx, ny)) {
         pos.x = nx; pos.y = ny;
         distance += d;
       } else {
