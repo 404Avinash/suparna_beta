@@ -579,19 +579,23 @@
       const distToTarget = Math.sqrt((target.x - pos.x) ** 2 + (target.y - pos.y) ** 2);
       const th = Math.atan2(target.y - pos.y, target.x - pos.x);
 
-      // Stuck detection: if no progress for 3 seconds, force direct flight
+      // Stuck detection: if no progress for 2 seconds, force direct flight
       stuckTimer += dt;
       const progressDelta = Math.abs(distToTarget - lastProgressDist);
       if (progressDelta > 5) { stuckTimer = 0; lastProgressDist = distToTarget; }
-      const forceBypass = stuckTimer > 3.0;
+      const forceBypass = stuckTimer > 2.0;
 
-      // Obstacle avoidance (disabled when stuck or very close to home)
       let desired;
-      const skipAvoidance = forceBypass || (isReturning && distToTarget < 80);
-      if (skipAvoidance || checkAhead(th, 50)) {
+
+      if (isReturning) {
+        // RETURNING HOME: fly direct, skip all obstacle avoidance
+        // Drone is at altitude — can safely fly over obstacles
+        desired = th;
+        avoiding = false;
+      } else if (forceBypass || checkAhead(th, 50)) {
         avoiding = false;
         desired = th;
-        if (forceBypass) stuckTimer = 0; // Reset after bypass
+        if (forceBypass) stuckTimer = 0;
       } else {
         if (!avoiding) {
           avoiding = true;
@@ -623,9 +627,12 @@
       const d = SPD * dt;
       const nx = pos.x + d * Math.cos(heading);
       const ny = pos.y + d * Math.sin(heading);
-      // Use smaller margin when returning home or bypassing
-      const moveMargin = (skipAvoidance) ? 10 : 30;
-      if (!inObstacle(nx, ny, moveMargin)) {
+
+      if (isReturning) {
+        // Always move when returning home
+        pos.x = nx; pos.y = ny;
+        distance += d;
+      } else if (!inObstacle(nx, ny)) {
         pos.x = nx; pos.y = ny;
         distance += d;
       } else {
