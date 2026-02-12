@@ -99,7 +99,7 @@ class SuparnaVisualizer:
         planner = CoveragePlanner(
             surveillance_map=self.smap,
             loiter_type=LoiterType.STANDARD,
-            loiter_radius=120.0,
+            loiter_radius=80.0,
             turn_radius=40.0,
             overlap_factor=0.3,
             coverage_threshold=98.0,
@@ -145,12 +145,33 @@ class SuparnaVisualizer:
         self.loiter_revs = 0.0
         self.loiter_r = 60.0
 
+        # Obstacle avoidance state
+        self.avoiding = False
+        self.avoid_dir = 1  # 1=right, -1=left
+
         self.trail: List[Point] = []
         self.dist = 0.0
         self.battery = 100.0
         self.n_loiters_done = 0
         self.covered_cells: Set[Tuple[int, int]] = set()
         self.smap.coverage_grid[:] = 0.0
+
+    # ── Obstacle avoidance helpers ────────────────────────────────────────────
+
+    def _in_obstacle(self, pos: Point) -> bool:
+        """Check if position is inside any obstacle's safety margin"""
+        for obs in self.smap.obstacles:
+            if pos.distance_to(obs.center) < obs.radius + self.smap.obstacle_margin + 10:
+                return True
+        return False
+
+    def _check_ahead(self, heading: float, dist: float = 50.0) -> bool:
+        """Check if path ahead is clear of obstacles"""
+        test = Point(
+            self.pos.x + dist * math.cos(heading),
+            self.pos.y + dist * math.sin(heading),
+        )
+        return not self._in_obstacle(test)
 
     # ── Drone update ─────────────────────────────────────────────────────────
 
@@ -166,23 +187,60 @@ class SuparnaVisualizer:
 
         target = self.waypoints[self.wp_idx]
 
-        # Smooth turning toward target
+        # Target heading
         th = math.atan2(target.y - self.pos.y, target.x - self.pos.x)
-        err = normalize_angle(th - self.heading)
+
+        # ── Obstacle avoidance (edge-following) ──
+        if self._check_ahead(th):
+            # Path clear — fly direct
+            self.avoiding = False
+            desired = th
+        else:
+            # Path blocked — edge-follow around obstacle
+            if not self.avoiding:
+                self.avoiding = True
+                # Pick avoidance direction: turn away from nearest obstacle
+                for obs in self.smap.obstacles:
+                    if self.pos.distance_to(obs.center) < 200:
+                        to_obs = math.atan2(obs.center.y - self.pos.y,
+                                            obs.center.x - self.pos.x)
+                        diff = normalize_angle(th - to_obs)
+                        self.avoid_dir = 1 if diff > 0 else -1
+                        break
+
+            desired = self.heading + self.avoid_dir * 0.8
+
+            # Try to curve back toward target
+            for test_a in [0.3, 0.5, 0.7]:
+                test_h = normalize_angle(self.heading + self.avoid_dir * test_a)
+                if self._check_ahead(test_h, 60):
+                    gap = abs(normalize_angle(th - test_h))
+                    if gap < 1.5:
+                        desired = test_h
+                        break
+
+        # Smooth turning
+        err = normalize_angle(desired - self.heading)
         mt = self.turn_rate * dt
         if abs(err) > mt:
             self.heading += mt if err > 0 else -mt
         else:
-            self.heading = th
+            self.heading = desired
         self.heading = normalize_angle(self.heading)
 
-        # Move forward
+        # Move forward (only if clear)
         d = self.spd * dt
-        self.pos = Point(
+        new_pos = Point(
             self.pos.x + d * math.cos(self.heading),
             self.pos.y + d * math.sin(self.heading),
         )
-        self.dist += d
+        if not self._in_obstacle(new_pos):
+            self.pos = new_pos
+            self.dist += d
+        else:
+            # Stuck — force turn
+            self.heading += self.avoid_dir * 0.5
+
         self.battery -= 0.08 * dt
 
         # Trail
@@ -194,6 +252,7 @@ class SuparnaVisualizer:
 
         # Check waypoint reached
         if self.pos.distance_to(target) < 20:
+            self.avoiding = False
             if self.wp_is_loiter[self.wp_idx]:
                 self.loiter_r = self.wp_loiter_r[self.wp_idx]
                 self._enter_loiter(target)
