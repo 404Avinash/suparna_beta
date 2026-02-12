@@ -23,7 +23,6 @@
       display: block;
     }
 
-    /* Side panel */
     #panel {
       position: fixed;
       top: 0;
@@ -172,10 +171,8 @@
       margin: 2px;
       border-radius: 10px;
       border: 1px solid;
-      color: #aab;
     }
 
-    /* Loading */
     #loading {
       position: fixed;
       top: 0;
@@ -220,22 +217,17 @@
 </head>
 
 <body>
-
   <div id="loading">
     <div class="spinner"></div>
     <h2>SUPARNA</h2>
     <p>Loading mission data...</p>
   </div>
-
   <div id="panel">
     <h1>SUPARNA</h1>
     <div class="sub">3D Mission Visualizer</div>
-
-    <div class="stat">
-      <label>Status</label>
+    <div class="stat"><label>Status</label>
       <div class="val accent" id="status">PLANNING</div>
     </div>
-
     <div class="stat">
       <label>Coverage</label>
       <div class="val green" id="coverage">0.0%</div>
@@ -243,7 +235,6 @@
         <div class="bar-fill cyan" id="covBar" style="width:0%"></div>
       </div>
     </div>
-
     <div class="stat">
       <label>Battery</label>
       <div class="val" id="battery">100%</div>
@@ -251,29 +242,20 @@
         <div class="bar-fill green" id="batBar" style="width:100%"></div>
       </div>
     </div>
-
     <hr class="divider">
-
-    <div class="stat">
-      <label>Loiters</label>
+    <div class="stat"><label>Loiters</label>
       <div class="val" id="loiterCount">0 / 0</div>
     </div>
-    <div class="stat">
-      <label>Distance</label>
+    <div class="stat"><label>Distance</label>
       <div class="val" id="distance">0 m</div>
     </div>
-    <div class="stat">
-      <label>Speed</label>
+    <div class="stat"><label>Speed</label>
       <div class="val" id="speedDisp">2.0x</div>
     </div>
-
     <hr class="divider">
-
     <label style="font-size:11px;color:#667;text-transform:uppercase;letter-spacing:1px">Mission</label>
     <ul class="checklist" id="checklist"></ul>
-
     <hr class="divider">
-
     <label style="font-size:11px;color:#667;text-transform:uppercase;letter-spacing:1px">Algorithms</label>
     <div style="margin-top:6px">
       <span class="algo-tag" style="border-color:#1db954;color:#1db954">Greedy Set Cover</span>
@@ -282,261 +264,235 @@
       <span class="algo-tag" style="border-color:#e04040;color:#e04040">Bug2 Avoidance</span>
       <span class="algo-tag" style="border-color:#c080ff;color:#c080ff">TSP Heuristic</span>
     </div>
-
     <hr class="divider">
-
     <div class="controls">
-      <div class="btn" id="btnPlay" onclick="togglePause()">⏸ Pause</div>
+      <div class="btn" id="btnPlay" onclick="togglePause()">&#9208; Pause</div>
       <div class="btn" onclick="changeSpeed(-0.5)">- Slow</div>
       <div class="btn" onclick="changeSpeed(0.5)">+ Fast</div>
-      <div class="btn" onclick="resetMission()">↻ Reset</div>
-      <div class="btn" onclick="newMission()">⟳ New Map</div>
+      <div class="btn" onclick="resetMission()">&#8635; Reset</div>
+      <div class="btn" onclick="newMission()">&#10227; New Map</div>
     </div>
   </div>
-
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
   <script>
-    // ── Globals ──────────────────────────────────────────────────────────────
+    // === Globals ===
     let scene, camera, renderer, controls;
     let missionData = null;
-    let drone, droneMesh, trailLine, trailPoints = [];
+    let droneMesh, trailLine, trailPoints = [];
     let loiterMeshes = [], obstacleMeshes = [], coverageMeshes = [];
     let groundPlane, gridHelper;
 
-    // Simulation state
     let simTime = 0, speed = 2.0, paused = false;
-    let wpIdx = 0, state = 'FLY'; // FLY | LOITER | DONE
-    let pos = { x: 0, y: 0, z: 15 }, heading = 0;
+    let wpIdx = 0, state = 'FLY';
+    let pos = { x: 0, y: 0 }, heading = 0;
     let loiterCenter = null, loiterAngle = 0, loiterRevs = 0, loiterR = 60;
     let nLoitersDone = 0, distance = 0, battery = 100;
-    let avoiding = false, avoidDir = 1;
-    let stuckTimer = 0, lastProgressDist = 0;
     let coveredSet = new Set();
+    let safeWaypoints = [];
     const SPD = 35, TURN_RATE = 2.5;
 
-    // ── Init ─────────────────────────────────────────────────────────────────
+    // === Init ===
     function init() {
       scene = new THREE.Scene();
       scene.background = new THREE.Color(0x0a0e17);
       scene.fog = new THREE.Fog(0x0a0e17, 800, 1800);
-
-      // Camera
       camera = new THREE.PerspectiveCamera(50, (window.innerWidth - 260) / window.innerHeight, 1, 5000);
       camera.position.set(500, 800, 600);
-      camera.lookAt(500, 0, 350);
-
-      // Renderer
       renderer = new THREE.WebGLRenderer({ antialias: true });
       renderer.setSize(window.innerWidth - 260, window.innerHeight);
       renderer.shadowMap.enabled = true;
       renderer.shadowMap.type = THREE.PCFSoftShadowMap;
       document.body.insertBefore(renderer.domElement, document.getElementById('panel'));
       renderer.domElement.id = 'canvas';
-
-      // Controls
       controls = new THREE.OrbitControls(camera, renderer.domElement);
       controls.target.set(500, 0, 350);
-      controls.enableDamping = true;
-      controls.dampingFactor = 0.08;
+      controls.enableDamping = true; controls.dampingFactor = 0.08;
       controls.maxPolarAngle = Math.PI / 2.1;
-      controls.minDistance = 200;
-      controls.maxDistance = 2000;
+      controls.minDistance = 200; controls.maxDistance = 2000;
       controls.update();
-
-      // Lighting
-      const ambient = new THREE.AmbientLight(0x334466, 0.6);
-      scene.add(ambient);
-
-      const dirLight = new THREE.DirectionalLight(0xffffff, 0.8);
-      dirLight.position.set(400, 600, 300);
-      dirLight.castShadow = true;
-      dirLight.shadow.camera.near = 1;
-      dirLight.shadow.camera.far = 2000;
-      dirLight.shadow.camera.left = -600;
-      dirLight.shadow.camera.right = 600;
-      dirLight.shadow.camera.top = 600;
-      dirLight.shadow.camera.bottom = -600;
-      dirLight.shadow.mapSize.width = 2048;
-      dirLight.shadow.mapSize.height = 2048;
-      scene.add(dirLight);
-
-      const hemiLight = new THREE.HemisphereLight(0x003355, 0x0a0e17, 0.3);
-      scene.add(hemiLight);
-
-      // Handle resize
-      window.addEventListener('resize', () => {
+      scene.add(new THREE.AmbientLight(0x334466, 0.6));
+      var dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      dl.position.set(400, 600, 300); dl.castShadow = true;
+      dl.shadow.camera.near = 1; dl.shadow.camera.far = 2000;
+      dl.shadow.camera.left = -600; dl.shadow.camera.right = 600;
+      dl.shadow.camera.top = 600; dl.shadow.camera.bottom = -600;
+      dl.shadow.mapSize.set(2048, 2048);
+      scene.add(dl);
+      scene.add(new THREE.HemisphereLight(0x003355, 0x0a0e17, 0.3));
+      window.addEventListener('resize', function () {
         camera.aspect = (window.innerWidth - 260) / window.innerHeight;
         camera.updateProjectionMatrix();
         renderer.setSize(window.innerWidth - 260, window.innerHeight);
       });
     }
 
-    // ── Build Scene From Mission Data ────────────────────────────────────────
+    // === Build Scene ===
     function buildScene(data) {
-      // Clear old objects
-      [...loiterMeshes, ...obstacleMeshes, ...coverageMeshes].forEach(m => scene.remove(m));
+      [].concat(loiterMeshes, obstacleMeshes, coverageMeshes).forEach(function (m) { scene.remove(m); });
       if (groundPlane) scene.remove(groundPlane);
       if (gridHelper) scene.remove(gridHelper);
       if (droneMesh) scene.remove(droneMesh);
       if (trailLine) scene.remove(trailLine);
       loiterMeshes = []; obstacleMeshes = []; coverageMeshes = [];
+      var W = data.map.width, H = data.map.height;
 
-      const W = data.map.width, H = data.map.height;
+      // Ground
+      groundPlane = new THREE.Mesh(
+        new THREE.PlaneGeometry(W, H),
+        new THREE.MeshStandardMaterial({ color: 0x161a24, roughness: 0.9 })
+      );
+      groundPlane.rotation.x = -Math.PI / 2; groundPlane.position.set(W / 2, -0.5, H / 2);
+      groundPlane.receiveShadow = true; scene.add(groundPlane);
 
-      // Ground plane
-      const groundGeo = new THREE.PlaneGeometry(W, H);
-      const groundMat = new THREE.MeshStandardMaterial({
-        color: 0x161a24, roughness: 0.9, metalness: 0.1
-      });
-      groundPlane = new THREE.Mesh(groundGeo, groundMat);
-      groundPlane.rotation.x = -Math.PI / 2;
-      groundPlane.position.set(W / 2, -0.5, H / 2);
-      groundPlane.receiveShadow = true;
-      scene.add(groundPlane);
-
-      // Grid
       gridHelper = new THREE.GridHelper(Math.max(W, H), 40, 0x1a2030, 0x141820);
-      gridHelper.position.set(W / 2, 0, H / 2);
-      scene.add(gridHelper);
+      gridHelper.position.set(W / 2, 0, H / 2); scene.add(gridHelper);
 
       // Obstacles
-      data.obstacles.forEach(obs => {
-        const h = obs.is_no_fly ? 15 : 30 + obs.radius * 0.3;
-        const color = obs.is_no_fly ? 0x802020 : 0x8b3030;
+      data.obstacles.forEach(function (obs) {
+        var h = obs.is_no_fly ? 15 : 30 + obs.radius * 0.3;
+        var clr = obs.is_no_fly ? 0x802020 : 0x8b3030;
+        var mesh = new THREE.Mesh(
+          new THREE.CylinderGeometry(obs.radius, obs.radius * 1.1, h, 24),
+          new THREE.MeshStandardMaterial({ color: clr, roughness: 0.6, metalness: 0.2, transparent: true, opacity: 0.85 })
+        );
+        mesh.position.set(obs.x, h / 2, obs.y); mesh.castShadow = true;
+        scene.add(mesh); obstacleMeshes.push(mesh);
 
-        // Main body
-        const geo = new THREE.CylinderGeometry(obs.radius, obs.radius * 1.1, h, 24);
-        const mat = new THREE.MeshStandardMaterial({
-          color: color, roughness: 0.6, metalness: 0.2, transparent: true, opacity: 0.85
-        });
-        const mesh = new THREE.Mesh(geo, mat);
-        mesh.position.set(obs.x, h / 2, obs.y);
-        mesh.castShadow = true;
-        scene.add(mesh);
-        obstacleMeshes.push(mesh);
-
-        // Safety margin ring
-        const ringGeo = new THREE.RingGeometry(obs.radius + 18, obs.radius + 22, 32);
-        const ringMat = new THREE.MeshBasicMaterial({
-          color: obs.is_no_fly ? 0x601010 : 0x401515, side: THREE.DoubleSide,
-          transparent: true, opacity: 0.4
-        });
-        const ring = new THREE.Mesh(ringGeo, ringMat);
-        ring.rotation.x = -Math.PI / 2;
-        ring.position.set(obs.x, 1, obs.y);
-        scene.add(ring);
-        obstacleMeshes.push(ring);
-
-        // Glow on top
-        const glowGeo = new THREE.CircleGeometry(obs.radius * 0.8, 20);
-        const glowMat = new THREE.MeshBasicMaterial({
-          color: 0xff3030, transparent: true, opacity: 0.15
-        });
-        const glow = new THREE.Mesh(glowGeo, glowMat);
-        glow.rotation.x = -Math.PI / 2;
-        glow.position.set(obs.x, h + 1, obs.y);
-        scene.add(glow);
-        obstacleMeshes.push(glow);
+        var ring = new THREE.Mesh(
+          new THREE.RingGeometry(obs.radius + 18, obs.radius + 22, 32),
+          new THREE.MeshBasicMaterial({ color: 0x401515, side: THREE.DoubleSide, transparent: true, opacity: 0.4 })
+        );
+        ring.rotation.x = -Math.PI / 2; ring.position.set(obs.x, 1, obs.y);
+        scene.add(ring); obstacleMeshes.push(ring);
       });
 
       // Loiter targets
-      data.loiters.forEach((l, i) => {
-        // Torus ring
-        const torusGeo = new THREE.TorusGeometry(l.radius, 1.5, 8, 48);
-        const torusMat = new THREE.MeshBasicMaterial({
-          color: 0xffb040, transparent: true, opacity: 0.5
-        });
-        const torus = new THREE.Mesh(torusGeo, torusMat);
-        torus.rotation.x = -Math.PI / 2;
-        torus.position.set(l.x, 15, l.y);
-        scene.add(torus);
-        loiterMeshes.push(torus);
+      data.loiters.forEach(function (l) {
+        var torus = new THREE.Mesh(
+          new THREE.TorusGeometry(l.radius, 1.5, 8, 48),
+          new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.5 })
+        );
+        torus.rotation.x = -Math.PI / 2; torus.position.set(l.x, 15, l.y);
+        scene.add(torus); loiterMeshes.push(torus);
 
-        // Vertical dashed line
-        const lineGeo = new THREE.BufferGeometry().setFromPoints([
-          new THREE.Vector3(l.x, 0, l.y),
-          new THREE.Vector3(l.x, 15, l.y),
-        ]);
-        const lineMat = new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.3 });
-        const line = new THREE.Line(lineGeo, lineMat);
-        scene.add(line);
-        loiterMeshes.push(line);
+        var vl = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(l.x, 0, l.y), new THREE.Vector3(l.x, 15, l.y)]),
+          new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.3 })
+        );
+        scene.add(vl); loiterMeshes.push(vl);
       });
 
       // Home marker
-      const homeGeo = new THREE.ConeGeometry(8, 20, 6);
-      const homeMat = new THREE.MeshStandardMaterial({ color: 0x1db954, emissive: 0x0a5020 });
-      const homeMesh = new THREE.Mesh(homeGeo, homeMat);
-      homeMesh.position.set(data.home.x, 10, data.home.y);
-      scene.add(homeMesh);
-      obstacleMeshes.push(homeMesh);
+      var hm = new THREE.Mesh(
+        new THREE.ConeGeometry(8, 20, 6),
+        new THREE.MeshStandardMaterial({ color: 0x1db954, emissive: 0x0a5020 })
+      );
+      hm.position.set(data.home.x, 10, data.home.y);
+      scene.add(hm); obstacleMeshes.push(hm);
 
       // Drone
-      const droneGroup = new THREE.Group();
-
-      // Body
-      const bodyGeo = new THREE.ConeGeometry(6, 18, 4);
-      const bodyMat = new THREE.MeshStandardMaterial({
-        color: 0x00d4ff, emissive: 0x004466, metalness: 0.5, roughness: 0.3
-      });
-      const body = new THREE.Mesh(bodyGeo, bodyMat);
-      body.rotation.z = Math.PI / 2;
-      body.rotation.y = Math.PI / 2;
-      droneGroup.add(body);
-
-      // Glow ring
-      const droneGlow = new THREE.Mesh(
+      var dg = new THREE.Group();
+      var body = new THREE.Mesh(
+        new THREE.ConeGeometry(6, 18, 4),
+        new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x004466, metalness: 0.5, roughness: 0.3 })
+      );
+      body.rotation.z = Math.PI / 2; body.rotation.y = Math.PI / 2; dg.add(body);
+      var glow = new THREE.Mesh(
         new THREE.RingGeometry(10, 14, 20),
         new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
       );
-      droneGlow.rotation.x = -Math.PI / 2;
-      droneGroup.add(droneGlow);
-
-      droneMesh = droneGroup;
+      glow.rotation.x = -Math.PI / 2; dg.add(glow);
+      droneMesh = dg;
       droneMesh.position.set(data.home.x, 15, data.home.y);
       scene.add(droneMesh);
 
       // Trail
-      const trailGeo = new THREE.BufferGeometry();
-      const trailMat = new THREE.LineBasicMaterial({ color: 0x00a0c0, transparent: true, opacity: 0.6 });
-      trailLine = new THREE.Line(trailGeo, trailMat);
+      trailLine = new THREE.Line(
+        new THREE.BufferGeometry(),
+        new THREE.LineBasicMaterial({ color: 0x00a0c0, transparent: true, opacity: 0.6 })
+      );
       scene.add(trailLine);
 
-      // Path preview lines
-      const pathPts = data.waypoints.map(w => new THREE.Vector3(w.x, 12, w.y));
-      const pathGeo = new THREE.BufferGeometry().setFromPoints(pathPts);
-      const pathMat = new THREE.LineDashedMaterial({
-        color: 0x2a4060, dashSize: 10, gapSize: 10, transparent: true, opacity: 0.4
-      });
-      const pathLine = new THREE.Line(pathGeo, pathMat);
-      pathLine.computeLineDistances();
-      scene.add(pathLine);
-      obstacleMeshes.push(pathLine);
+      // Path preview
+      var pts = safeWaypoints.map(function (w) { return new THREE.Vector3(w.x, 12, w.y); });
+      var pl = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineDashedMaterial({ color: 0x2a4060, dashSize: 10, gapSize: 10, transparent: true, opacity: 0.4 })
+      );
+      pl.computeLineDistances(); scene.add(pl); obstacleMeshes.push(pl);
 
-      // Update camera target
       controls.target.set(W / 2, 0, H / 2);
       camera.position.set(W / 2, Math.max(W, H) * 0.9, H / 2 + Math.max(W, H) * 0.5);
       controls.update();
     }
 
-    // ── Simulation ───────────────────────────────────────────────────────────
-    function inObstacle(px, py, margin) {
+    // === Pre-compute safe paths around obstacles ===
+    function ptInObs(px, py) {
       if (!missionData) return false;
-      margin = margin || 30;
-      for (const obs of missionData.obstacles) {
-        const dx = px - obs.x, dy = py - obs.y;
-        if (Math.sqrt(dx * dx + dy * dy) < obs.radius + margin) return true;
+      for (var i = 0; i < missionData.obstacles.length; i++) {
+        var obs = missionData.obstacles[i];
+        var dx = px - obs.x, dy = py - obs.y;
+        if (Math.sqrt(dx * dx + dy * dy) < obs.radius + 35) return true;
       }
       return false;
     }
 
-    function checkAhead(h, dist) {
-      const tx = pos.x + dist * Math.cos(h);
-      const ty = pos.y + dist * Math.sin(h);
-      return !inObstacle(tx, ty);
+    function lineHitsObs(x1, y1, x2, y2) {
+      if (!missionData) return null;
+      for (var i = 0; i < missionData.obstacles.length; i++) {
+        var obs = missionData.obstacles[i];
+        var margin = obs.radius + 40;
+        var dx = x2 - x1, dy = y2 - y1, len2 = dx * dx + dy * dy;
+        if (len2 < 1) continue;
+        var t = ((obs.x - x1) * dx + (obs.y - y1) * dy) / len2;
+        t = Math.max(0, Math.min(1, t));
+        var px = x1 + t * dx, py = y1 + t * dy;
+        var dist = Math.sqrt((obs.x - px) * (obs.x - px) + (obs.y - py) * (obs.y - py));
+        if (dist < margin) return obs;
+      }
+      return null;
     }
 
+    function computeSafePath() {
+      if (!missionData) return;
+      var raw = missionData.waypoints;
+      safeWaypoints = [];
+
+      for (var i = 0; i < raw.length; i++) {
+        safeWaypoints.push(raw[i]);
+        if (i < raw.length - 1) {
+          // Insert detour waypoints if straight path hits obstacles
+          for (var attempt = 0; attempt < 6; attempt++) {
+            var last = safeWaypoints[safeWaypoints.length - 1];
+            var obs = lineHitsObs(last.x, last.y, raw[i + 1].x, raw[i + 1].y);
+            if (!obs) break;
+
+            // Perpendicular detour around the obstacle
+            var dx = raw[i + 1].x - last.x, dy = raw[i + 1].y - last.y;
+            var len = Math.sqrt(dx * dx + dy * dy) || 1;
+            var px = -dy / len, py = dx / len;
+            var detourR = obs.radius + 55;
+
+            // Try both perpendicular sides
+            var d1x = obs.x + px * detourR, d1y = obs.y + py * detourR;
+            var d2x = obs.x - px * detourR, d2y = obs.y - py * detourR;
+
+            var detour;
+            if (!ptInObs(d1x, d1y)) {
+              detour = { x: d1x, y: d1y, type: 'detour' };
+            } else if (!ptInObs(d2x, d2y)) {
+              detour = { x: d2x, y: d2y, type: 'detour' };
+            } else {
+              detour = { x: obs.x + px * (detourR + 50), y: obs.y + py * (detourR + 50), type: 'detour' };
+            }
+            safeWaypoints.push(detour);
+          }
+        }
+      }
+    }
+
+    // === Simulation ===
     function normalizeAngle(a) {
       while (a > Math.PI) a -= 2 * Math.PI;
       while (a < -Math.PI) a += 2 * Math.PI;
@@ -546,11 +502,9 @@
     function updateSim(dt) {
       if (paused || state === 'DONE' || !missionData) return;
 
-      const wps = missionData.waypoints;
-
       if (state === 'LOITER') {
         if (!loiterCenter) { state = 'FLY'; return; }
-        const w = SPD / loiterR;
+        var w = SPD / loiterR;
         loiterAngle += w * dt;
         loiterRevs += w * dt / (2 * Math.PI);
         pos.x = loiterCenter.x + loiterR * Math.cos(loiterAngle);
@@ -558,10 +512,7 @@
         heading = normalizeAngle(loiterAngle + Math.PI / 2);
         distance += SPD * dt;
         battery -= 0.05 * dt;
-
-        // Coverage during loiter
         markCoverage(loiterCenter.x, loiterCenter.y, loiterR + 20);
-
         if (loiterRevs >= 1.0) {
           nLoitersDone++;
           state = 'FLY';
@@ -572,75 +523,31 @@
         return;
       }
 
-      if (wpIdx >= wps.length) { state = 'DONE'; return; }
+      if (wpIdx >= safeWaypoints.length) { state = 'DONE'; return; }
 
-      const target = wps[wpIdx];
-      const isReturning = target.type === 'return' || target.type === 'home';
-      const distToTarget = Math.sqrt((target.x - pos.x) ** 2 + (target.y - pos.y) ** 2);
-      const th = Math.atan2(target.y - pos.y, target.x - pos.x);
+      var target = safeWaypoints[wpIdx];
+      var distToTarget = Math.sqrt((target.x - pos.x) * (target.x - pos.x) + (target.y - pos.y) * (target.y - pos.y));
+      var th = Math.atan2(target.y - pos.y, target.x - pos.x);
 
-      // Stuck detection with direction-flip recovery
-      stuckTimer += dt;
-      const progressDelta = Math.abs(distToTarget - lastProgressDist);
-      if (progressDelta > 5) { stuckTimer = 0; lastProgressDist = distToTarget; }
-
-      // Flip avoidance direction after 2s stuck, force brief bypass after 5s
-      if (stuckTimer > 2.0 && stuckTimer < 2.1) { avoidDir *= -1; }
-      const forceBurst = stuckTimer > 5.0 && stuckTimer < 5.3;
-      if (stuckTimer > 5.3) { stuckTimer = 0; } // reset cycle
-
-      let desired;
-
-      if (forceBurst || checkAhead(th, 50)) {
-        avoiding = false;
-        desired = th;
-      } else {
-        if (!avoiding) {
-          avoiding = true;
-          for (const obs of missionData.obstacles) {
-            const dx2 = obs.x - pos.x, dy2 = obs.y - pos.y;
-            if (Math.sqrt(dx2 * dx2 + dy2 * dy2) < 200) {
-              const toObs = Math.atan2(dy2, dx2);
-              avoidDir = normalizeAngle(th - toObs) > 0 ? 1 : -1;
-              break;
-            }
-          }
-        }
-        desired = heading + avoidDir * 0.8;
-        for (const ta of [0.3, 0.5, 0.7]) {
-          const testH = normalizeAngle(heading + avoidDir * ta);
-          if (checkAhead(testH, 60) && Math.abs(normalizeAngle(th - testH)) < 1.5) {
-            desired = testH;
-            break;
-          }
-        }
-      }
-
-      const err = normalizeAngle(desired - heading);
-      const mt = TURN_RATE * dt;
+      // Smooth turning — path is pre-cleared of obstacles
+      var err = normalizeAngle(th - heading);
+      var mt = TURN_RATE * dt;
       if (Math.abs(err) > mt) heading += err > 0 ? mt : -mt;
-      else heading = desired;
+      else heading = th;
       heading = normalizeAngle(heading);
 
-      const d = SPD * dt;
-      const nx = pos.x + d * Math.cos(heading);
-      const ny = pos.y + d * Math.sin(heading);
-
-      if (!inObstacle(nx, ny)) {
-        pos.x = nx; pos.y = ny;
-        distance += d;
-      } else {
-        heading += avoidDir * 0.5;
-      }
+      // Move forward
+      var d = SPD * dt;
+      pos.x += d * Math.cos(heading);
+      pos.y += d * Math.sin(heading);
+      distance += d;
       battery -= 0.08 * dt;
 
-      markCoverage(pos.x, pos.y, 40);
+      markCoverage(pos.x, pos.y, 50);
 
-      // Check waypoint reached — wider radius for home
-      const captureR = isReturning ? 40 : 20;
+      // Check waypoint reached
+      var captureR = (target.type === 'return' || target.type === 'home') ? 40 : 20;
       if (distToTarget < captureR) {
-        avoiding = false;
-        stuckTimer = 0;
         if (target.type === 'loiter') {
           state = 'LOITER';
           loiterCenter = { x: target.x, y: target.y };
@@ -651,35 +558,30 @@
           wpIdx++;
         }
       }
-
       updateDroneMesh();
     }
 
     function markCoverage(cx, cy, radius) {
-      const res = missionData.map.resolution || 10;
-      const gcx = Math.floor(cx / res), gcy = Math.floor(cy / res);
-      const rc = Math.ceil(radius / res);
-      for (let dx = -rc; dx <= rc; dx++) {
-        for (let dy = -rc; dy <= rc; dy++) {
+      var res = missionData.map.resolution || 10;
+      var gcx = Math.floor(cx / res), gcy = Math.floor(cy / res);
+      var rc = Math.ceil(radius / res);
+      for (var dx = -rc; dx <= rc; dx++) {
+        for (var dy = -rc; dy <= rc; dy++) {
           if (dx * dx + dy * dy > rc * rc) continue;
-          const nx = gcx + dx, ny = gcy + dy;
-          const key = nx + ',' + ny;
+          var nx = gcx + dx, ny = gcy + dy;
+          var key = nx + ',' + ny;
           if (coveredSet.has(key)) continue;
-          const wx = nx * res, wy = ny * res;
+          var wx = nx * res, wy = ny * res;
           if (wx < 0 || wx >= missionData.map.width || wy < 0 || wy >= missionData.map.height) continue;
-          if (inObstacle(wx, wy)) continue;
+          if (ptInObs(wx, wy)) continue;
           coveredSet.add(key);
-
-          // Add coverage mesh (small green tile)
-          const geo = new THREE.PlaneGeometry(res, res);
-          const mat = new THREE.MeshBasicMaterial({
-            color: 0x1db954, transparent: true, opacity: 0.35, side: THREE.DoubleSide
-          });
-          const tile = new THREE.Mesh(geo, mat);
+          var tile = new THREE.Mesh(
+            new THREE.PlaneGeometry(res, res),
+            new THREE.MeshBasicMaterial({ color: 0x1db954, transparent: true, opacity: 0.35, side: THREE.DoubleSide })
+          );
           tile.rotation.x = -Math.PI / 2;
           tile.position.set(wx + res / 2, 0.5, wy + res / 2);
-          scene.add(tile);
-          coverageMeshes.push(tile);
+          scene.add(tile); coverageMeshes.push(tile);
         }
       }
     }
@@ -688,8 +590,6 @@
       if (!droneMesh) return;
       droneMesh.position.set(pos.x, 15 + Math.sin(simTime * 3) * 2, pos.y);
       droneMesh.rotation.y = -heading + Math.PI / 2;
-
-      // Update trail
       trailPoints.push(new THREE.Vector3(pos.x, 14, pos.y));
       if (trailPoints.length > 2000) trailPoints.shift();
       if (trailLine && trailPoints.length > 1) {
@@ -698,158 +598,106 @@
       }
     }
 
-    // ── UI Updates ───────────────────────────────────────────────────────────
+    // === UI ===
     function updateUI() {
       if (!missionData) return;
-      const totalLoiters = missionData.loiters.length;
-      const W = missionData.map.width, H = missionData.map.height;
-      const res = missionData.map.resolution || 10;
-      const totalCells = Math.floor(W / res) * Math.floor(H / res);
-      const covPct = Math.min(100, (coveredSet.size / totalCells) * 100);
+      var totalLoiters = missionData.loiters.length;
+      var W = missionData.map.width, H = missionData.map.height;
+      var res = missionData.map.resolution || 10;
+      var totalCells = Math.floor(W / res) * Math.floor(H / res);
+      var covPct = Math.min(100, (coveredSet.size / totalCells) * 100);
 
       document.getElementById('status').textContent =
         state === 'DONE' ? 'MISSION COMPLETE' :
-          state === 'LOITER' ? `LOITERING (${nLoitersDone + 1}/${totalLoiters})` :
-            wpIdx >= missionData.waypoints.length - 1 ? 'RETURNING HOME' :
-              `EN ROUTE → L${nLoitersDone + 1}`;
-
+          state === 'LOITER' ? 'LOITERING (' + (nLoitersDone + 1) + '/' + totalLoiters + ')' :
+            wpIdx >= safeWaypoints.length - 1 ? 'RETURNING HOME' :
+              'EN ROUTE > L' + (nLoitersDone + 1);
       document.getElementById('status').className =
         'val ' + (state === 'DONE' ? 'green' : state === 'LOITER' ? 'warn' : 'accent');
 
       document.getElementById('coverage').textContent = covPct.toFixed(1) + '%';
       document.getElementById('covBar').style.width = covPct + '%';
-
-      const bat = Math.max(0, battery);
+      var bat = Math.max(0, battery);
       document.getElementById('battery').textContent = bat.toFixed(0) + '%';
       document.getElementById('batBar').style.width = bat + '%';
-      document.getElementById('batBar').className =
-        'bar-fill ' + (bat < 20 ? 'danger' : bat < 40 ? 'warn' : 'green');
-
-      document.getElementById('loiterCount').textContent = `${nLoitersDone} / ${totalLoiters}`;
+      document.getElementById('batBar').className = 'bar-fill ' + (bat < 20 ? 'danger' : bat < 40 ? 'warn' : 'green');
+      document.getElementById('loiterCount').textContent = nLoitersDone + ' / ' + totalLoiters;
       document.getElementById('distance').textContent = distance.toFixed(0) + ' m';
       document.getElementById('speedDisp').textContent = speed.toFixed(1) + 'x';
 
-      // Checklist
-      const cl = document.getElementById('checklist');
-      cl.innerHTML = '';
-      for (let i = 0; i < totalLoiters; i++) {
-        const li = document.createElement('li');
-        const done = i < nLoitersDone;
-        const active = i === nLoitersDone && state === 'LOITER';
+      var cl = document.getElementById('checklist'); cl.innerHTML = '';
+      for (var i = 0; i < totalLoiters; i++) {
+        var li = document.createElement('li');
+        var done = i < nLoitersDone, active = i === nLoitersDone && state === 'LOITER';
         li.className = done ? 'done' : active ? 'active' : '';
-        li.textContent = (done ? '✓' : active ? '▶' : '○') + ` Loiter ${i + 1}`;
+        li.textContent = (done ? '> ' : active ? '>> ' : '  ') + 'Loiter ' + (i + 1);
         cl.appendChild(li);
       }
-      const retLi = document.createElement('li');
+      var retLi = document.createElement('li');
       retLi.className = state === 'DONE' ? 'done' : '';
-      retLi.textContent = (state === 'DONE' ? '✓' : '○') + ' Return HOME';
+      retLi.textContent = (state === 'DONE' ? '> ' : '  ') + 'Return HOME';
       cl.appendChild(retLi);
 
-      // Update loiter ring colors
-      missionData.loiters.forEach((l, i) => {
-        const mesh = loiterMeshes[i * 2]; // Every other is a torus
+      missionData.loiters.forEach(function (l, i) {
+        var mesh = loiterMeshes[i * 2];
         if (!mesh) return;
-        if (i < nLoitersDone) {
-          mesh.material.color.set(0x1db954);
-          mesh.material.opacity = 0.7;
-        } else if (i === nLoitersDone && state === 'LOITER') {
-          mesh.material.color.set(0x00d4ff);
-          mesh.material.opacity = 0.8;
-        }
+        if (i < nLoitersDone) { mesh.material.color.set(0x1db954); mesh.material.opacity = 0.7; }
+        else if (i === nLoitersDone && state === 'LOITER') { mesh.material.color.set(0x00d4ff); mesh.material.opacity = 0.8; }
       });
     }
 
-    // ── Controls ─────────────────────────────────────────────────────────────
+    // === Controls ===
     function togglePause() {
       paused = !paused;
-      document.getElementById('btnPlay').textContent = paused ? '▶ Play' : '⏸ Pause';
+      document.getElementById('btnPlay').textContent = paused ? 'Play' : 'Pause';
       document.getElementById('btnPlay').className = paused ? 'btn active' : 'btn';
     }
-
-    function changeSpeed(delta) {
-      speed = Math.max(0.5, Math.min(10, speed + delta));
-    }
-
+    function changeSpeed(delta) { speed = Math.max(0.5, Math.min(10, speed + delta)); }
     function resetMission() {
       if (!missionData) return;
       wpIdx = 0; state = 'FLY'; nLoitersDone = 0;
-      distance = 0; battery = 100; avoiding = false;
-      pos = { x: missionData.home.x, y: missionData.home.y, z: 15 };
+      distance = 0; battery = 100;
+      pos = { x: missionData.home.x, y: missionData.home.y };
       heading = 0; trailPoints = [];
       coveredSet.clear();
-      coverageMeshes.forEach(m => { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+      coverageMeshes.forEach(function (m) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
       coverageMeshes = [];
-      loiterMeshes.forEach((m, i) => {
+      loiterMeshes.forEach(function (m, i) {
         if (i % 2 === 0 && m.material) { m.material.color.set(0xffb040); m.material.opacity = 0.5; }
       });
+      computeSafePath();
     }
-
-    async function newMission() {
-      // Generate new seed and re-export
-      const seed = Math.floor(Math.random() * 10000);
+    function newMission() {
       document.getElementById('loading').style.display = 'flex';
-      document.getElementById('loading').querySelector('p').textContent =
-        `Generating new map (seed: ${seed})...`;
-
-      // Try to call Python exporter
-      try {
-        const resp = await fetch(`mission.json?t=${Date.now()}`);
-        if (resp.ok) {
-          missionData = await resp.json();
-          resetMission();
-          buildScene(missionData);
-          document.getElementById('loading').style.display = 'none';
-        }
-      } catch (e) {
-        document.getElementById('loading').querySelector('p').textContent =
-          'Run: python export_mission.py --seed ' + seed;
-        setTimeout(() => { location.reload(); }, 3000);
-      }
+      document.getElementById('loading').querySelector('p').textContent = 'Run: python export_mission.py then refresh';
+      setTimeout(function () { location.reload(); }, 3000);
     }
 
-    // ── Animation Loop ───────────────────────────────────────────────────────
+    // === Loop ===
     function animate() {
       requestAnimationFrame(animate);
-
-      const dt = 1 / 60;
-      simTime += dt;
-
-      // Simulation steps
-      for (let i = 0; i < Math.ceil(speed * 2); i++) {
-        updateSim(dt * 0.5);
-      }
-
-      // Animate obstacle glow
-      obstacleMeshes.forEach(m => {
-        if (m.material && m.material.emissive) {
-          // subtle pulse
-        }
-      });
-
-      controls.update();
-      updateUI();
+      var dt = 1 / 60; simTime += dt;
+      for (var i = 0; i < Math.ceil(speed * 2); i++) updateSim(dt * 0.5);
+      controls.update(); updateUI();
       renderer.render(scene, camera);
     }
 
-    // ── Load & Start ─────────────────────────────────────────────────────────
+    // === Start ===
     async function start() {
       init();
-
       try {
-        const resp = await fetch('mission.json');
+        var resp = await fetch('mission.json');
         missionData = await resp.json();
       } catch (e) {
-        document.getElementById('loading').querySelector('p').textContent =
-          'Run: python export_mission.py first!';
+        document.getElementById('loading').querySelector('p').textContent = 'Run: python export_mission.py first!';
         return;
       }
-
-      pos = { x: missionData.home.x, y: missionData.home.y, z: 15 };
+      pos = { x: missionData.home.x, y: missionData.home.y };
+      computeSafePath();
       buildScene(missionData);
       document.getElementById('loading').style.display = 'none';
       animate();
     }
-
     start();
   </script>
 </body>

@@ -39,9 +39,9 @@ def export_mission(seed=None):
     planner = CoveragePlanner(
         surveillance_map=smap,
         loiter_type=LoiterType.STANDARD,
-        loiter_radius=80.0,
+        loiter_radius=70.0,
         turn_radius=40.0,
-        overlap_factor=0.3,
+        overlap_factor=0.25,
         coverage_threshold=98.0,
         max_loiters=50,
     )
