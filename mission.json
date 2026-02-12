@@ -1,0 +1,229 @@
+{
+  "map": {
+    "width": 1000.0,
+    "height": 700.0,
+    "resolution": 10.0
+  },
+  "home": {
+    "x": 62.25096797004002,
+    "y": 287.0082091433534
+  },
+  "obstacles": [
+    {
+      "x": 696.2500697556058,
+      "y": 443.63500801096444,
+      "radius": 35.044483216697024,
+      "name": "tower_1",
+      "is_no_fly": false
+    },
+    {
+      "x": 320.42958863319745,
+      "y": 538.1848023954993,
+      "radius": 45.21440708277341,
+      "name": "hill_2",
+      "is_no_fly": false
+    },
+    {
+      "x": 374.25040573759605,
+      "y": 182.16082491709983,
+      "radius": 56.41627277447021,
+      "name": "tree_cluster_3",
+      "is_no_fly": false
+    },
+    {
+      "x": 644.4219424916295,
+      "y": 141.34323852496343,
+      "radius": 56.58191410563481,
+      "name": "hill_4",
+      "is_no_fly": false
+    },
+    {
+      "x": 295.3568858740171,
+      "y": 331.0573658402012,
+      "radius": 49.036294466336855,
+      "name": "antenna_5",
+      "is_no_fly": false
+    },
+    {
+      "x": 837.6047086886368,
+      "y": 328.83367570380676,
+      "radius": 42.80343554772989,
+      "name": "antenna_6",
+      "is_no_fly": false
+    },
+    {
+      "x": 906.5241966208606,
+      "y": 162.86549568379627,
+      "radius": 41.28983996711249,
+      "name": "water_tower_7",
+      "is_no_fly": false
+    },
+    {
+      "x": 118.7543436794191,
+      "y": 138.5008128219841,
+      "radius": 29.090923547820726,
+      "name": "hill_8",
+      "is_no_fly": false
+    }
+  ],
+  "loiters": [
+    {
+      "x": 80.0,
+      "y": 352.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 1
+    },
+    {
+      "x": 80.0,
+      "y": 488.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 2
+    },
+    {
+      "x": 80.0,
+      "y": 624.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 3
+    },
+    {
+      "x": 488.0,
+      "y": 488.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 4
+    },
+    {
+      "x": 488.0,
+      "y": 624.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 5
+    },
+    {
+      "x": 624.0,
+      "y": 624.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 6
+    },
+    {
+      "x": 760.0,
+      "y": 624.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 7
+    },
+    {
+      "x": 896.0,
+      "y": 624.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 8
+    },
+    {
+      "x": 896.0,
+      "y": 488.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 9
+    },
+    {
+      "x": 488.0,
+      "y": 352.0,
+      "radius": 80.0,
+      "type": "STANDARD",
+      "index": 10
+    }
+  ],
+  "waypoints": [
+    {
+      "x": 62.25096797004002,
+      "y": 287.0082091433534,
+      "type": "home"
+    },
+    {
+      "x": 80.0,
+      "y": 352.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 1
+    },
+    {
+      "x": 80.0,
+      "y": 488.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 2
+    },
+    {
+      "x": 80.0,
+      "y": 624.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 3
+    },
+    {
+      "x": 488.0,
+      "y": 488.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 4
+    },
+    {
+      "x": 488.0,
+      "y": 624.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 5
+    },
+    {
+      "x": 624.0,
+      "y": 624.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 6
+    },
+    {
+      "x": 760.0,
+      "y": 624.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 7
+    },
+    {
+      "x": 896.0,
+      "y": 624.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 8
+    },
+    {
+      "x": 896.0,
+      "y": 488.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 9
+    },
+    {
+      "x": 488.0,
+      "y": 352.0,
+      "type": "loiter",
+      "radius": 80.0,
+      "index": 10
+    },
+    {
+      "x": 62.25096797004002,
+      "y": 287.0082091433534,
+      "type": "return"
+    }
+  ],
+  "stats": {
+    "total_loiters": 10,
+    "total_distance": 5572.833670359298,
+    "total_energy": 5266.877715610552,
+    "num_obstacles": 8
+  }
+}
