@@ -1,5 +1,5 @@
 """
-A* Pathfinder for Project KALPANA - Fixed
+A* Pathfinder for Project SUPARNA - Fixed
 Properly avoids obstacles with safety margins!
 """
 

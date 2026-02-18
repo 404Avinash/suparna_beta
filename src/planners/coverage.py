@@ -1,5 +1,5 @@
 """
-Coverage Planner for Project KALPANA
+Coverage Planner for Project SUPARNA
 Loiter-first coverage strategy - the heart of Swift-inspired path planning
 
 Instead of traditional lawnmower patterns, we place optimal loiter circles

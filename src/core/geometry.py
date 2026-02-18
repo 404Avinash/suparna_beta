@@ -1,5 +1,5 @@
 """
-Geometry utilities for Project KALPANA
+Geometry utilities for Project SUPARNA
 Basic geometric operations optimized for drone path planning
 """
 

@@ -1,5 +1,5 @@
 """
-Transition Planner for Project KALPANA
+Transition Planner for Project SUPARNA
 Plans smooth transitions between loiter patterns using Dubins paths
 """
 

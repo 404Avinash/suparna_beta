@@ -1,1 +1,1 @@
-# Project KALPANA - Swift-Inspired Drone Path Optimization
+# Project SUPARNA - Swift-Inspired Drone Path Optimization

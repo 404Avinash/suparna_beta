@@ -1,5 +1,5 @@
 """
-Reactive Obstacle Avoidance for Project KALPANA
+Reactive Obstacle Avoidance for Project SUPARNA
 Bug Algorithm inspired edge-following behavior
 
 When the drone detects an obstacle ahead:

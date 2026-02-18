@@ -1,5 +1,5 @@
 """
-Dubins Path Generation for Project KALPANA
+Dubins Path Generation for Project SUPARNA
 Optimal paths for fixed-wing aircraft with minimum turn radius
 
 Dubins paths are the shortest paths between two configurations (position + heading)

@@ -1,5 +1,5 @@
 """
-Loiter Pattern Definitions for Project KALPANA
+Loiter Pattern Definitions for Project SUPARNA
 The heart of Swift-inspired surveillance - no hover, only loiter
 """
 
@@ -40,7 +40,7 @@ LOITER_ENERGY_COST = {
 @dataclass
 class Loiter:
     """
-    A loiter pattern - the fundamental unit of surveillance in KALPANA
+    A loiter pattern - the fundamental unit of surveillance in SUPARNA
     
     Unlike traditional waypoints, a Loiter represents a circular or racetrack
     pattern that the drone flies to provide continuous coverage of an area.

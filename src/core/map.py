@@ -1,5 +1,5 @@
 """
-Surveillance Map Representation for Project KALPANA
+Surveillance Map Representation for Project SUPARNA
 Grid-based map with obstacles, no-fly zones, and coverage tracking
 """
 
