@@ -233,7 +233,7 @@
 
   <div id="panel">
     <h1>SUPARNA</h1>
-    <div class="sub">3D Mission Visualizer</div>
+    <div class="sub">PCCE Mission Visualizer</div>
     <div id="sectorInfo" class="sector-label"></div>
 
     <div class="stat"><label>Status</label>
@@ -247,6 +247,13 @@
       </div>
     </div>
     <div class="stat">
+      <label>Energy (Wh)</label>
+      <div class="val" id="energyDisp">0 / 370 Wh</div>
+      <div class="bar-wrap">
+        <div class="bar-fill green" id="energyBar" style="width:100%"></div>
+      </div>
+    </div>
+    <div class="stat">
       <label>Battery</label>
       <div class="val" id="battery">100%</div>
       <div class="bar-wrap">
@@ -254,6 +261,9 @@
       </div>
     </div>
     <hr class="divider">
+    <div class="stat"><label>Altitude</label>
+      <div class="val accent" id="altDisp">0m AGL</div>
+    </div>
     <div class="stat"><label>Loiters</label>
       <div class="val" id="loiterCount">0 / 0</div>
     </div>
@@ -264,16 +274,24 @@
       <div class="val" id="speedDisp">2.0x</div>
     </div>
     <hr class="divider">
+    <div id="perfPanel" style="display:none">
+      <label style="font-size:10px;color:#667;text-transform:uppercase;letter-spacing:1px">ISA Performance</label>
+      <div style="font-size:11px;color:#8899aa;margin-top:4px;line-height:1.6" id="perfStats"></div>
+      <hr class="divider">
+    </div>
     <label style="font-size:10px;color:#667;text-transform:uppercase;letter-spacing:1px">Mission</label>
     <ul class="checklist" id="checklist"></ul>
     <hr class="divider">
-    <label style="font-size:10px;color:#667;text-transform:uppercase;letter-spacing:1px">Algorithms</label>
+    <label style="font-size:10px;color:#667;text-transform:uppercase;letter-spacing:1px">PCCE Algorithms</label>
     <div style="margin-top:4px">
       <span class="algo-tag" style="border-color:#1db954;color:#1db954">Greedy Set Cover</span>
       <span class="algo-tag" style="border-color:#00d4ff;color:#00d4ff">Dubins Curves</span>
       <span class="algo-tag" style="border-color:#f0c040;color:#f0c040">A* Search</span>
       <span class="algo-tag" style="border-color:#e04040;color:#e04040">Bug2 Avoidance</span>
-      <span class="algo-tag" style="border-color:#c080ff;color:#c080ff">TSP Heuristic</span>
+      <span class="algo-tag" style="border-color:#c080ff;color:#c080ff">NN-TSP</span>
+      <span class="algo-tag" style="border-color:#80d0ff;color:#80d0ff">ISA Atmo</span>
+      <span class="algo-tag" style="border-color:#ff8080;color:#ff8080">Energy Mgr</span>
+      <span class="algo-tag" style="border-color:#ffcc00;color:#ffcc00">Loiter-to-Land</span>
     </div>
     <hr class="divider">
     <div class="controls">
@@ -294,6 +312,7 @@
     var droneMesh, trailLine, trailPoints = [];
     var loiterMeshes = [], obstacleMeshes = [], coverageMeshes = [], labelSprites = [];
     var groundPlane, gridHelper, terrainMesh;
+    var descentMeshes = [];
 
     var simTime = 0, speed = 2.0, paused = false;
     var wpIdx = 0, state = 'FLY';
@@ -305,6 +324,9 @@
     var isLAC = false;
     var SPD = 35, TURN_RATE = 2.5;
     var DRONE_ALT = 15;
+    var energyUsedWh = 0, energyCapacityWh = 370;
+    var descentWpIdx = 0, descentWps = [];
+    var currentAltAGL = 0;
 
     // === Init ===
     function init() {
@@ -687,6 +709,33 @@
 
     function updateSim(dt) {
       if (paused || state === 'DONE' || !missionData) return;
+
+      // Energy tracking
+      var powerW = missionData.performance ? missionData.performance.power_draw_w : 133;
+      var cruiseSpeed = missionData.performance ? missionData.performance.cruise_speed_ms : 19;
+
+      // === DESCENT STATE ===
+      if (state === 'DESCENT') {
+        if (descentWpIdx >= descentWps.length) { state = 'DONE'; currentAltAGL = 0; updateDroneMesh(); return; }
+        var dw = descentWps[descentWpIdx];
+        var dx = dw.x - pos.x, dy = dw.y - pos.y;
+        var dist = Math.sqrt(dx * dx + dy * dy);
+        if (dist < 15) { descentWpIdx++; }
+        else {
+          var th = Math.atan2(dy, dx);
+          var spd = (dw.speed || cruiseSpeed) * 0.6;
+          pos.x += spd * dt * Math.cos(th);
+          pos.y += spd * dt * Math.sin(th);
+          heading = th;
+        }
+        currentAltAGL = dw.alt || 0;
+        distance += SPD * dt * 0.4;
+        energyUsedWh += powerW * 0.6 * dt / 3600;
+        battery = Math.max(0, (1 - energyUsedWh / energyCapacityWh) * 100);
+        updateDroneMesh(); return;
+      }
+
+      // === LOITER STATE ===
       if (state === 'LOITER') {
         if (!loiterCenter) { state = 'FLY'; return; }
         var w = SPD / loiterR;
@@ -695,14 +744,30 @@
         pos.x = loiterCenter.x + loiterR * Math.cos(loiterAngle);
         pos.y = loiterCenter.y + loiterR * Math.sin(loiterAngle);
         heading = normalizeAngle(loiterAngle + Math.PI / 2);
-        distance += SPD * dt; battery -= 0.03 * dt;
+        distance += SPD * dt;
+        energyUsedWh += powerW * 0.92 * dt / 3600;
+        battery = Math.max(0, (1 - energyUsedWh / energyCapacityWh) * 100);
+        currentAltAGL = DRONE_ALT;
         markCoverage(loiterCenter.x, loiterCenter.y, loiterR + 30);
         if (loiterRevs >= 1.0) {
           nLoitersDone++; state = 'FLY'; loiterCenter = null; wpIdx++;
         }
         updateDroneMesh(); return;
       }
-      if (wpIdx >= safeWaypoints.length) { state = 'DONE'; return; }
+
+      // === FLY STATE ===
+      if (wpIdx >= safeWaypoints.length) {
+        // Transition to descent if descent data available
+        if (missionData.descent && missionData.descent.waypoints && missionData.descent.waypoints.length > 0) {
+          state = 'DESCENT';
+          descentWps = missionData.descent.waypoints;
+          descentWpIdx = 0;
+          currentAltAGL = DRONE_ALT;
+        } else {
+          state = 'DONE';
+        }
+        return;
+      }
       var target = safeWaypoints[wpIdx];
       var distT = Math.sqrt((target.x - pos.x) * (target.x - pos.x) + (target.y - pos.y) * (target.y - pos.y));
       var th = Math.atan2(target.y - pos.y, target.x - pos.x);
@@ -713,7 +778,10 @@
       heading = normalizeAngle(heading);
       var d = SPD * dt;
       pos.x += d * Math.cos(heading); pos.y += d * Math.sin(heading);
-      distance += d; battery -= 0.05 * dt;
+      distance += d;
+      energyUsedWh += powerW * dt / 3600;
+      battery = Math.max(0, (1 - energyUsedWh / energyCapacityWh) * 100);
+      currentAltAGL = DRONE_ALT;
       markCoverage(pos.x, pos.y, isLAC ? 120 : 50);
       var captureR = (target.type === 'return' || target.type === 'home') ? 60 : (isLAC ? 50 : 20);
       if (distT < captureR) {
@@ -754,15 +822,50 @@
     function updateDroneMesh() {
       if (!droneMesh) return;
       var baseH = isLAC ? getTerrainHeight(pos.x, pos.y) : 0;
-      droneMesh.position.set(pos.x, baseH + DRONE_ALT + Math.sin(simTime * 3) * 3, pos.y);
+      var alt = state === 'DESCENT' ? currentAltAGL : DRONE_ALT;
+      droneMesh.position.set(pos.x, baseH + alt + Math.sin(simTime * 3) * (state === 'DESCENT' ? 0.5 : 3), pos.y);
       droneMesh.rotation.y = -heading + Math.PI / 2;
-      var trailH = baseH + DRONE_ALT - 2;
+      // Bank during descent
+      if (state === 'DESCENT' && currentAltAGL > 15) {
+        droneMesh.rotation.z = Math.sin(simTime * 2) * 0.3;
+      } else {
+        droneMesh.rotation.z = 0;
+      }
+      var trailH = baseH + alt - 2;
       trailPoints.push(new THREE.Vector3(pos.x, trailH, pos.y));
       if (trailPoints.length > 3000) trailPoints.shift();
       if (trailLine && trailPoints.length > 1) {
         trailLine.geometry.dispose();
         trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints);
       }
+    }
+
+    // === Build Descent Preview ===
+    function buildDescentPreview(data) {
+      if (!data.descent || !data.descent.waypoints || data.descent.waypoints.length < 2) return;
+      var pts = data.descent.waypoints.map(function (w) {
+        var bh = isLAC ? getTerrainHeight(w.x, w.y) : 0;
+        return new THREE.Vector3(w.x, bh + (w.alt || 0), w.y);
+      });
+      var descentLine = new THREE.Line(
+        new THREE.BufferGeometry().setFromPoints(pts),
+        new THREE.LineBasicMaterial({ color: 0xffcc00, transparent: true, opacity: 0.4, linewidth: 2 })
+      );
+      scene.add(descentLine); descentMeshes.push(descentLine);
+
+      // Landing zone marker
+      var lastWp = data.descent.waypoints[data.descent.waypoints.length - 1];
+      var landH = isLAC ? getTerrainHeight(lastWp.x, lastWp.y) : 0;
+      var landRing = new THREE.Mesh(
+        new THREE.RingGeometry(data.descent.radius_m * 0.3, data.descent.radius_m * 0.35, 32),
+        new THREE.MeshBasicMaterial({ color: 0xffcc00, side: THREE.DoubleSide, transparent: true, opacity: 0.3 })
+      );
+      landRing.rotation.x = -Math.PI / 2; landRing.position.set(data.descent.center.x, landH + 1, data.descent.center.y);
+      scene.add(landRing); descentMeshes.push(landRing);
+
+      var landLbl = makeTextSprite('LANDING ZONE', '#ffcc00');
+      landLbl.position.set(data.descent.center.x, landH + 30, data.descent.center.y);
+      scene.add(landLbl); descentMeshes.push(landLbl);
     }
 
     // === UI ===
@@ -774,22 +877,40 @@
       var totalCells = Math.floor(W / res) * Math.floor(H / res);
       var covPct = Math.min(100, (coveredSet.size / totalCells) * 100);
 
-      document.getElementById('status').textContent =
-        state === 'DONE' ? 'MISSION COMPLETE' :
+      // Status
+      var statusText = state === 'DONE' ? 'MISSION COMPLETE' :
+        state === 'DESCENT' ? 'LOITER-TO-LAND (' + currentAltAGL.toFixed(0) + 'm AGL)' :
           state === 'LOITER' ? 'LOITERING (' + (nLoitersDone + 1) + '/' + totalLoiters + ')' :
             wpIdx >= safeWaypoints.length - 1 ? 'RETURNING HOME' :
               'EN ROUTE > L' + (nLoitersDone + 1);
-      document.getElementById('status').className = 'val ' + (state === 'DONE' ? 'green' : state === 'LOITER' ? 'warn' : 'accent');
+      document.getElementById('status').textContent = statusText;
+      document.getElementById('status').className = 'val ' + (state === 'DONE' ? 'green' : state === 'DESCENT' ? 'warn' : state === 'LOITER' ? 'warn' : 'accent');
+
+      // Coverage
       document.getElementById('coverage').textContent = covPct.toFixed(1) + '%';
       document.getElementById('covBar').style.width = covPct + '%';
+
+      // Energy
+      var remainWh = Math.max(0, energyCapacityWh - energyUsedWh);
+      document.getElementById('energyDisp').textContent = energyUsedWh.toFixed(0) + ' / ' + energyCapacityWh + ' Wh';
+      var ePct = (remainWh / energyCapacityWh) * 100;
+      document.getElementById('energyBar').style.width = ePct + '%';
+      document.getElementById('energyBar').className = 'bar-fill ' + (ePct < 20 ? 'danger' : ePct < 40 ? 'warn' : 'green');
+
+      // Battery
       var bat = Math.max(0, battery);
       document.getElementById('battery').textContent = bat.toFixed(0) + '%';
       document.getElementById('batBar').style.width = bat + '%';
       document.getElementById('batBar').className = 'bar-fill ' + (bat < 20 ? 'danger' : bat < 40 ? 'warn' : 'green');
+
+      // Altitude
+      document.getElementById('altDisp').textContent = (state === 'DESCENT' ? currentAltAGL.toFixed(0) : DRONE_ALT) + 'm AGL';
+
       document.getElementById('loiterCount').textContent = nLoitersDone + ' / ' + totalLoiters;
       document.getElementById('distance').textContent = (distance >= 1000 ? (distance / 1000).toFixed(1) + ' km' : distance.toFixed(0) + ' m');
       document.getElementById('speedDisp').textContent = speed.toFixed(1) + 'x';
 
+      // Checklist
       var cl = document.getElementById('checklist'); cl.innerHTML = '';
       for (var i = 0; i < totalLoiters; i++) {
         var li = document.createElement('li');
@@ -799,8 +920,8 @@
         cl.appendChild(li);
       }
       var retLi = document.createElement('li');
-      retLi.className = state === 'DONE' ? 'done' : '';
-      retLi.textContent = (state === 'DONE' ? '> ' : '  ') + 'Return HOME';
+      retLi.className = state === 'DONE' ? 'done' : state === 'DESCENT' ? 'active' : '';
+      retLi.textContent = (state === 'DONE' ? '> ' : state === 'DESCENT' ? '>> ' : '  ') + 'Loiter-to-Land';
       cl.appendChild(retLi);
 
       missionData.loiters.forEach(function (l, i) {
@@ -821,6 +942,7 @@
     function resetMission() {
       if (!missionData) return;
       wpIdx = 0; state = 'FLY'; nLoitersDone = 0; distance = 0; battery = 100;
+      energyUsedWh = 0; descentWpIdx = 0; currentAltAGL = DRONE_ALT;
       pos = { x: missionData.home.x, y: missionData.home.y };
       heading = 0; trailPoints = []; coveredSet.clear();
       coverageMeshes.forEach(function (m) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
@@ -849,8 +971,31 @@
       try { var resp = await fetch('mission.json'); missionData = await resp.json(); }
       catch (e) { document.getElementById('loading').querySelector('p').textContent = 'Run: python export_mission.py first!'; return; }
       pos = { x: missionData.home.x, y: missionData.home.y };
+
+      // Load energy data
+      if (missionData.energy) {
+        energyCapacityWh = missionData.energy.battery_capacity_wh || 370;
+      }
+      // Load descent waypoints
+      if (missionData.descent && missionData.descent.waypoints) {
+        descentWps = missionData.descent.waypoints;
+      }
+      // Show ISA performance
+      if (missionData.performance) {
+        var p = missionData.performance;
+        document.getElementById('perfPanel').style.display = 'block';
+        document.getElementById('perfStats').innerHTML =
+          'Cruise: <b>' + p.cruise_speed_ms + ' m/s</b><br>' +
+          'Power: <b>' + p.power_draw_w + ' W</b><br>' +
+          'Loiter R: <b>' + p.loiter_radius_m + ' m</b><br>' +
+          'Stall: <b>' + p.stall_speed_ms + ' m/s</b><br>' +
+          'Density: <b>' + p.density_ratio + ' sigma</b>';
+      }
+
+      currentAltAGL = DRONE_ALT;
       computeSafePath();
       buildScene(missionData);
+      buildDescentPreview(missionData);
       document.getElementById('loading').style.display = 'none';
       animate();
     }
