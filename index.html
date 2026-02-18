@@ -1,0 +1,861 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SUPARNA - 3D Mission Visualizer</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      background: #0a0e17;
+      color: #ddd;
+      font-family: 'Segoe UI', sans-serif;
+      overflow: hidden;
+    }
+
+    #canvas {
+      display: block;
+    }
+
+    #panel {
+      position: fixed;
+      top: 0;
+      right: 0;
+      width: 280px;
+      height: 100vh;
+      background: rgba(12, 16, 24, 0.92);
+      border-left: 1px solid #1e2a3a;
+      padding: 20px 16px;
+      z-index: 10;
+      backdrop-filter: blur(12px);
+      overflow-y: auto;
+    }
+
+    #panel h1 {
+      font-size: 22px;
+      color: #00d4ff;
+      margin-bottom: 2px;
+      letter-spacing: 2px;
+    }
+
+    #panel .sub {
+      font-size: 11px;
+      color: #556;
+      margin-bottom: 16px;
+    }
+
+    .stat {
+      margin-bottom: 12px;
+    }
+
+    .stat label {
+      font-size: 10px;
+      color: #667;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .stat .val {
+      font-size: 18px;
+      font-weight: 700;
+      color: #eee;
+    }
+
+    .stat .val.accent {
+      color: #00d4ff;
+    }
+
+    .stat .val.green {
+      color: #1db954;
+    }
+
+    .stat .val.warn {
+      color: #f0a030;
+    }
+
+    .bar-wrap {
+      width: 100%;
+      height: 8px;
+      background: #1a1f2e;
+      border-radius: 4px;
+      margin-top: 3px;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 4px;
+      transition: width 0.3s;
+    }
+
+    .bar-fill.green {
+      background: linear-gradient(90deg, #1db954, #1ed760);
+    }
+
+    .bar-fill.cyan {
+      background: linear-gradient(90deg, #0090b0, #00d4ff);
+    }
+
+    .bar-fill.warn {
+      background: linear-gradient(90deg, #c09030, #f0c040);
+    }
+
+    .bar-fill.danger {
+      background: linear-gradient(90deg, #c03030, #e04040);
+    }
+
+    .divider {
+      border: none;
+      border-top: 1px solid #1e2a3a;
+      margin: 12px 0;
+    }
+
+    .checklist {
+      list-style: none;
+      padding: 0;
+      max-height: 200px;
+      overflow-y: auto;
+    }
+
+    .checklist li {
+      font-size: 12px;
+      padding: 2px 0;
+      color: #556;
+    }
+
+    .checklist li.done {
+      color: #1db954;
+    }
+
+    .checklist li.active {
+      color: #00d4ff;
+      font-weight: 600;
+    }
+
+    .controls {
+      margin-top: 12px;
+    }
+
+    .btn {
+      display: inline-block;
+      padding: 5px 12px;
+      margin: 2px;
+      background: #1a1f2e;
+      border: 1px solid #2a3040;
+      border-radius: 6px;
+      color: #aab;
+      font-size: 11px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+
+    .btn:hover {
+      background: #252b3a;
+      border-color: #00d4ff;
+      color: #fff;
+    }
+
+    .btn.active {
+      background: #00d4ff22;
+      border-color: #00d4ff;
+      color: #00d4ff;
+    }
+
+    .algo-tag {
+      display: inline-block;
+      font-size: 9px;
+      padding: 2px 7px;
+      margin: 2px;
+      border-radius: 10px;
+      border: 1px solid;
+    }
+
+    #loading {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: #0a0e17;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      z-index: 100;
+      flex-direction: column;
+    }
+
+    #loading h2 {
+      color: #00d4ff;
+      font-size: 28px;
+      margin-bottom: 10px;
+    }
+
+    #loading p {
+      color: #556;
+      font-size: 14px;
+    }
+
+    .spinner {
+      width: 40px;
+      height: 40px;
+      border: 3px solid #1a1f2e;
+      border-top: 3px solid #00d4ff;
+      border-radius: 50%;
+      animation: spin 1s linear infinite;
+      margin-bottom: 16px;
+    }
+
+    @keyframes spin {
+      to {
+        transform: rotate(360deg);
+      }
+    }
+
+    .sector-label {
+      font-size: 10px;
+      color: #667;
+      margin-top: 2px;
+    }
+  </style>
+</head>
+
+<body>
+  <div id="loading">
+    <div class="spinner"></div>
+    <h2>SUPARNA</h2>
+    <p>Loading mission data...</p>
+  </div>
+
+  <div id="panel">
+    <h1>SUPARNA</h1>
+    <div class="sub">3D Mission Visualizer</div>
+    <div id="sectorInfo" class="sector-label"></div>
+
+    <div class="stat"><label>Status</label>
+      <div class="val accent" id="status">PLANNING</div>
+    </div>
+    <div class="stat">
+      <label>Coverage</label>
+      <div class="val green" id="coverage">0.0%</div>
+      <div class="bar-wrap">
+        <div class="bar-fill cyan" id="covBar" style="width:0%"></div>
+      </div>
+    </div>
+    <div class="stat">
+      <label>Battery</label>
+      <div class="val" id="battery">100%</div>
+      <div class="bar-wrap">
+        <div class="bar-fill green" id="batBar" style="width:100%"></div>
+      </div>
+    </div>
+    <hr class="divider">
+    <div class="stat"><label>Loiters</label>
+      <div class="val" id="loiterCount">0 / 0</div>
+    </div>
+    <div class="stat"><label>Distance</label>
+      <div class="val" id="distance">0 m</div>
+    </div>
+    <div class="stat"><label>Speed</label>
+      <div class="val" id="speedDisp">2.0x</div>
+    </div>
+    <hr class="divider">
+    <label style="font-size:10px;color:#667;text-transform:uppercase;letter-spacing:1px">Mission</label>
+    <ul class="checklist" id="checklist"></ul>
+    <hr class="divider">
+    <label style="font-size:10px;color:#667;text-transform:uppercase;letter-spacing:1px">Algorithms</label>
+    <div style="margin-top:4px">
+      <span class="algo-tag" style="border-color:#1db954;color:#1db954">Greedy Set Cover</span>
+      <span class="algo-tag" style="border-color:#00d4ff;color:#00d4ff">Dubins Curves</span>
+      <span class="algo-tag" style="border-color:#f0c040;color:#f0c040">A* Search</span>
+      <span class="algo-tag" style="border-color:#e04040;color:#e04040">Bug2 Avoidance</span>
+      <span class="algo-tag" style="border-color:#c080ff;color:#c080ff">TSP Heuristic</span>
+    </div>
+    <hr class="divider">
+    <div class="controls">
+      <div class="btn" id="btnPlay" onclick="togglePause()">Pause</div>
+      <div class="btn" onclick="changeSpeed(-0.5)">- Slow</div>
+      <div class="btn" onclick="changeSpeed(0.5)">+ Fast</div>
+      <div class="btn" onclick="resetMission()">Reset</div>
+      <div class="btn" onclick="newMission()">New Map</div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+  <script>
+    // === Globals ===
+    var scene, camera, renderer, controls;
+    var missionData = null;
+    var droneMesh, trailLine, trailPoints = [];
+    var loiterMeshes = [], obstacleMeshes = [], coverageMeshes = [], labelSprites = [];
+    var groundPlane, gridHelper, terrainMesh;
+
+    var simTime = 0, speed = 2.0, paused = false;
+    var wpIdx = 0, state = 'FLY';
+    var pos = { x: 0, y: 0 }, heading = 0;
+    var loiterCenter = null, loiterAngle = 0, loiterRevs = 0, loiterR = 60;
+    var nLoitersDone = 0, distance = 0, battery = 100;
+    var coveredSet = new Set();
+    var safeWaypoints = [];
+    var isLAC = false;
+    var SPD = 35, TURN_RATE = 2.5;
+    var DRONE_ALT = 15;
+
+    // === Init ===
+    function init() {
+      scene = new THREE.Scene();
+      scene.background = new THREE.Color(0x0a0e17);
+      camera = new THREE.PerspectiveCamera(50, (innerWidth - 280) / innerHeight, 1, 20000);
+      renderer = new THREE.WebGLRenderer({ antialias: true });
+      renderer.setSize(innerWidth - 280, innerHeight);
+      renderer.shadowMap.enabled = true;
+      renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+      document.body.insertBefore(renderer.domElement, document.getElementById('panel'));
+      renderer.domElement.id = 'canvas';
+
+      controls = new THREE.OrbitControls(camera, renderer.domElement);
+      controls.enableDamping = true; controls.dampingFactor = 0.08;
+      controls.maxPolarAngle = Math.PI / 2.1;
+
+      scene.add(new THREE.AmbientLight(0x334466, 0.6));
+      var dl = new THREE.DirectionalLight(0xffffff, 0.8);
+      dl.position.set(2000, 3000, 1500); dl.castShadow = true;
+      dl.shadow.camera.near = 1; dl.shadow.camera.far = 10000;
+      dl.shadow.camera.left = -3000; dl.shadow.camera.right = 3000;
+      dl.shadow.camera.top = 3000; dl.shadow.camera.bottom = -3000;
+      dl.shadow.mapSize.set(2048, 2048);
+      scene.add(dl);
+      scene.add(new THREE.HemisphereLight(0x88aacc, 0x443322, 0.4));
+
+      addEventListener('resize', function () {
+        camera.aspect = (innerWidth - 280) / innerHeight;
+        camera.updateProjectionMatrix();
+        renderer.setSize(innerWidth - 280, innerHeight);
+      });
+    }
+
+    // === Terrain Color ===
+    function getTerrainColor(elevation, minE, maxE) {
+      var t = (elevation - minE) / (maxE - minE);
+      var r, g, b;
+      if (t < 0.2) {
+        // Valley floor: dark olive/brown
+        r = 0.22 + t * 0.3; g = 0.20 + t * 0.25; b = 0.12 + t * 0.1;
+      } else if (t < 0.45) {
+        // Rocky slopes: grey-brown
+        var s = (t - 0.2) / 0.25;
+        r = 0.28 + s * 0.2; g = 0.25 + s * 0.15; b = 0.18 + s * 0.15;
+      } else if (t < 0.7) {
+        // High rock: slate grey
+        var s = (t - 0.45) / 0.25;
+        r = 0.48 + s * 0.15; g = 0.40 + s * 0.15; b = 0.33 + s * 0.18;
+      } else {
+        // Snow/ice: white with blue tint
+        var s = (t - 0.7) / 0.3;
+        r = 0.63 + s * 0.35; g = 0.55 + s * 0.42; b = 0.51 + s * 0.47;
+      }
+      return new THREE.Color(r, g, b);
+    }
+
+    // === Build Terrain ===
+    function buildTerrain(data) {
+      var hm = data.heightmap;
+      var rows = hm.rows, cols = hm.cols, step = hm.step;
+      var W = data.map.width, H = data.map.height;
+      var minE = hm.min_elevation, maxE = hm.max_elevation;
+      var elevScale = 0.15; // vertical exaggeration
+
+      var geo = new THREE.PlaneGeometry(W, H, cols - 1, rows - 1);
+      geo.rotateX(-Math.PI / 2);
+
+      var positions = geo.attributes.position.array;
+      var colors = new Float32Array(positions.length);
+
+      for (var r = 0; r < rows; r++) {
+        for (var c = 0; c < cols; c++) {
+          var idx = r * cols + c;
+          var vi = idx * 3;
+          var elev = hm.data[idx];
+          var y = (elev - minE) * elevScale;
+          positions[vi + 1] = y; // Y is up
+
+          var clr = getTerrainColor(elev, minE, maxE);
+          colors[vi] = clr.r;
+          colors[vi + 1] = clr.g;
+          colors[vi + 2] = clr.b;
+        }
+      }
+
+      geo.setAttribute('color', new THREE.BufferAttribute(colors, 3));
+      geo.computeVertexNormals();
+
+      var mat = new THREE.MeshStandardMaterial({
+        vertexColors: true, roughness: 0.85, metalness: 0.05,
+        flatShading: true,
+      });
+
+      terrainMesh = new THREE.Mesh(geo, mat);
+      terrainMesh.position.set(W / 2, 0, H / 2);
+      terrainMesh.receiveShadow = true;
+      scene.add(terrainMesh);
+      return elevScale;
+    }
+
+    // === Get Terrain Height ===
+    function getTerrainHeight(px, py) {
+      if (!missionData || !missionData.heightmap) return 0;
+      var hm = missionData.heightmap;
+      var step = hm.step;
+      var c = Math.floor(px / step);
+      var r = Math.floor(py / step);
+      c = Math.max(0, Math.min(c, hm.cols - 1));
+      r = Math.max(0, Math.min(r, hm.rows - 1));
+      var elev = hm.data[r * hm.cols + c];
+      return (elev - hm.min_elevation) * 0.15;
+    }
+
+    // === Text Sprite ===
+    function makeTextSprite(text, color) {
+      var canvas = document.createElement('canvas');
+      var sz = 512; canvas.width = sz; canvas.height = 128;
+      var ctx = canvas.getContext('2d');
+      ctx.font = 'bold 36px Segoe UI';
+      ctx.fillStyle = color || '#ffffff';
+      ctx.textAlign = 'center';
+      ctx.fillText(text, sz / 2, 70);
+      var tex = new THREE.CanvasTexture(canvas);
+      var mat = new THREE.SpriteMaterial({ map: tex, transparent: true, opacity: 0.85 });
+      var sprite = new THREE.Sprite(mat);
+      sprite.scale.set(200, 50, 1);
+      return sprite;
+    }
+
+    // === Build Scene ===
+    function buildScene(data) {
+      // Clear old
+      [].concat(loiterMeshes, obstacleMeshes, coverageMeshes, labelSprites).forEach(function (m) { scene.remove(m); });
+      if (groundPlane) scene.remove(groundPlane);
+      if (gridHelper) scene.remove(gridHelper);
+      if (terrainMesh) scene.remove(terrainMesh);
+      if (droneMesh) scene.remove(droneMesh);
+      if (trailLine) scene.remove(trailLine);
+      loiterMeshes = []; obstacleMeshes = []; coverageMeshes = []; labelSprites = [];
+
+      var W = data.map.width, H = data.map.height;
+      isLAC = data.map.type === 'lac';
+      var elevScale = 0;
+
+      if (isLAC && data.heightmap) {
+        // LAC terrain mode
+        scene.background = new THREE.Color(0x0b1020);
+        scene.fog = new THREE.Fog(0x1a2540, 2000, 8000);
+        SPD = 60; // faster for larger map
+        DRONE_ALT = 80;
+        elevScale = buildTerrain(data);
+
+        // Sector label
+        document.getElementById('sectorInfo').textContent = 'LADAKH SECTOR — LAC BORDER PATROL';
+      } else {
+        // Flat map mode
+        scene.background = new THREE.Color(0x0a0e17);
+        scene.fog = new THREE.Fog(0x0a0e17, 800, 1800);
+        SPD = 35;
+        DRONE_ALT = 15;
+
+        groundPlane = new THREE.Mesh(
+          new THREE.PlaneGeometry(W, H),
+          new THREE.MeshStandardMaterial({ color: 0x161a24, roughness: 0.9 })
+        );
+        groundPlane.rotation.x = -Math.PI / 2; groundPlane.position.set(W / 2, -0.5, H / 2);
+        groundPlane.receiveShadow = true; scene.add(groundPlane);
+
+        gridHelper = new THREE.GridHelper(Math.max(W, H), 40, 0x1a2030, 0x141820);
+        gridHelper.position.set(W / 2, 0, H / 2); scene.add(gridHelper);
+
+        document.getElementById('sectorInfo').textContent = '';
+      }
+
+      // Obstacles
+      data.obstacles.forEach(function (obs) {
+        var baseH = isLAC ? getTerrainHeight(obs.x, obs.y) : 0;
+        var h, clr;
+        if (obs.is_no_fly) {
+          h = isLAC ? 40 : 15;
+          clr = 0x802020;
+        } else {
+          h = isLAC ? 60 + obs.radius * 0.5 : 30 + obs.radius * 0.3;
+          clr = isLAC ? 0x6a5040 : 0x8b3030;
+        }
+
+        var mesh;
+        if (isLAC && !obs.is_no_fly) {
+          // Mountain peak: jagged cone
+          mesh = new THREE.Mesh(
+            new THREE.ConeGeometry(obs.radius, h, 6),
+            new THREE.MeshStandardMaterial({ color: clr, roughness: 0.8, flatShading: true })
+          );
+        } else {
+          mesh = new THREE.Mesh(
+            new THREE.CylinderGeometry(obs.radius, obs.radius * 1.1, h, 24),
+            new THREE.MeshStandardMaterial({ color: clr, roughness: 0.6, metalness: 0.2, transparent: true, opacity: 0.85 })
+          );
+        }
+        mesh.position.set(obs.x, baseH + h / 2, obs.y);
+        mesh.castShadow = true;
+        scene.add(mesh); obstacleMeshes.push(mesh);
+
+        // Safety ring
+        var ringClr = obs.is_no_fly ? 0x801010 : (isLAC ? 0x503020 : 0x401515);
+        var ring = new THREE.Mesh(
+          new THREE.RingGeometry(obs.radius + 18, obs.radius + 22, 32),
+          new THREE.MeshBasicMaterial({ color: ringClr, side: THREE.DoubleSide, transparent: true, opacity: 0.35 })
+        );
+        ring.rotation.x = -Math.PI / 2; ring.position.set(obs.x, baseH + 1, obs.y);
+        scene.add(ring); obstacleMeshes.push(ring);
+
+        // Obstacle name label
+        if (isLAC && obs.name) {
+          var lbl = makeTextSprite(obs.name, obs.is_no_fly ? '#ff4040' : '#ccaa80');
+          lbl.position.set(obs.x, baseH + h + 30, obs.y);
+          scene.add(lbl); labelSprites.push(lbl);
+        }
+      });
+
+      // Landmarks
+      if (isLAC && data.landmarks) {
+        Object.keys(data.landmarks).forEach(function (name) {
+          var lm = data.landmarks[name];
+          var baseH = getTerrainHeight(lm.x, lm.y);
+          var lbl = makeTextSprite(name, '#00d4ff');
+          lbl.position.set(lm.x, baseH + 60, lm.y);
+          lbl.scale.set(300, 75, 1);
+          scene.add(lbl); labelSprites.push(lbl);
+
+          // Marker pin
+          var pin = new THREE.Mesh(
+            new THREE.SphereGeometry(8, 8, 8),
+            new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.6 })
+          );
+          pin.position.set(lm.x, baseH + 40, lm.y);
+          scene.add(pin); labelSprites.push(pin);
+        });
+      }
+
+      // Loiter targets
+      data.loiters.forEach(function (l) {
+        var baseH = isLAC ? getTerrainHeight(l.x, l.y) : 0;
+        var torusH = baseH + DRONE_ALT;
+        var torus = new THREE.Mesh(
+          new THREE.TorusGeometry(l.radius, isLAC ? 3 : 1.5, 8, 48),
+          new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.5 })
+        );
+        torus.rotation.x = -Math.PI / 2; torus.position.set(l.x, torusH, l.y);
+        scene.add(torus); loiterMeshes.push(torus);
+
+        var vl = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(l.x, baseH, l.y), new THREE.Vector3(l.x, torusH, l.y)]),
+          new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.25 })
+        );
+        scene.add(vl); loiterMeshes.push(vl);
+      });
+
+      // Home marker
+      var homeH = isLAC ? getTerrainHeight(data.home.x, data.home.y) : 0;
+      var hm = new THREE.Mesh(
+        new THREE.ConeGeometry(isLAC ? 15 : 8, isLAC ? 35 : 20, 6),
+        new THREE.MeshStandardMaterial({ color: 0x1db954, emissive: 0x0a5020 })
+      );
+      hm.position.set(data.home.x, homeH + 17, data.home.y);
+      scene.add(hm); obstacleMeshes.push(hm);
+
+      if (isLAC) {
+        var homeLbl = makeTextSprite('INDIAN FOB (HOME)', '#1db954');
+        homeLbl.position.set(data.home.x, homeH + 60, data.home.y);
+        scene.add(homeLbl); labelSprites.push(homeLbl);
+      }
+
+      // Drone
+      var dg = new THREE.Group();
+      var body = new THREE.Mesh(
+        new THREE.ConeGeometry(isLAC ? 10 : 6, isLAC ? 30 : 18, 4),
+        new THREE.MeshStandardMaterial({ color: 0x00d4ff, emissive: 0x004466, metalness: 0.5, roughness: 0.3 })
+      );
+      body.rotation.z = Math.PI / 2; body.rotation.y = Math.PI / 2; dg.add(body);
+      var glow = new THREE.Mesh(
+        new THREE.RingGeometry(isLAC ? 16 : 10, isLAC ? 22 : 14, 20),
+        new THREE.MeshBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.15, side: THREE.DoubleSide })
+      );
+      glow.rotation.x = -Math.PI / 2; dg.add(glow);
+      droneMesh = dg;
+      droneMesh.position.set(data.home.x, homeH + DRONE_ALT, data.home.y);
+      scene.add(droneMesh);
+
+      // Trail
+      trailLine = new THREE.Line(
+        new THREE.BufferGeometry(),
+        new THREE.LineBasicMaterial({ color: 0x00a0c0, transparent: true, opacity: 0.6 })
+      );
+      scene.add(trailLine);
+
+      // Path preview
+      var pts = safeWaypoints.map(function (w) {
+        var bh = isLAC ? getTerrainHeight(w.x, w.y) : 0;
+        return new THREE.Vector3(w.x, bh + DRONE_ALT - 2, w.y);
+      });
+      if (pts.length > 1) {
+        var pl = new THREE.Line(
+          new THREE.BufferGeometry().setFromPoints(pts),
+          new THREE.LineDashedMaterial({ color: 0x2a4060, dashSize: isLAC ? 30 : 10, gapSize: isLAC ? 30 : 10, transparent: true, opacity: 0.35 })
+        );
+        pl.computeLineDistances(); scene.add(pl); obstacleMeshes.push(pl);
+      }
+
+      // Camera
+      controls.target.set(W / 2, isLAC ? 100 : 0, H / 2);
+      var camDist = Math.max(W, H) * (isLAC ? 1.2 : 0.9);
+      camera.position.set(W / 2, camDist * 0.6, H / 2 + camDist * 0.5);
+      controls.minDistance = isLAC ? 500 : 200;
+      controls.maxDistance = isLAC ? 10000 : 2000;
+      controls.update();
+    }
+
+    // === Pre-compute safe paths ===
+    function ptInObs(px, py) {
+      if (!missionData) return false;
+      for (var i = 0; i < missionData.obstacles.length; i++) {
+        var obs = missionData.obstacles[i];
+        var dx = px - obs.x, dy = py - obs.y;
+        if (Math.sqrt(dx * dx + dy * dy) < obs.radius + 35) return true;
+      }
+      return false;
+    }
+
+    function lineHitsObs(x1, y1, x2, y2) {
+      if (!missionData) return null;
+      for (var i = 0; i < missionData.obstacles.length; i++) {
+        var obs = missionData.obstacles[i];
+        var margin = obs.radius + 40;
+        var dx = x2 - x1, dy = y2 - y1, len2 = dx * dx + dy * dy;
+        if (len2 < 1) continue;
+        var t = ((obs.x - x1) * dx + (obs.y - y1) * dy) / len2;
+        t = Math.max(0, Math.min(1, t));
+        var px = x1 + t * dx, py = y1 + t * dy;
+        var dist = Math.sqrt((obs.x - px) * (obs.x - px) + (obs.y - py) * (obs.y - py));
+        if (dist < margin) return obs;
+      }
+      return null;
+    }
+
+    function computeSafePath() {
+      if (!missionData) return;
+      var raw = missionData.waypoints;
+      safeWaypoints = [];
+      for (var i = 0; i < raw.length; i++) {
+        safeWaypoints.push(raw[i]);
+        if (i < raw.length - 1) {
+          for (var attempt = 0; attempt < 6; attempt++) {
+            var last = safeWaypoints[safeWaypoints.length - 1];
+            var obs = lineHitsObs(last.x, last.y, raw[i + 1].x, raw[i + 1].y);
+            if (!obs) break;
+            var dx = raw[i + 1].x - last.x, dy = raw[i + 1].y - last.y;
+            var len = Math.sqrt(dx * dx + dy * dy) || 1;
+            var px = -dy / len, py = dx / len;
+            var detourR = obs.radius + 55;
+            var d1x = obs.x + px * detourR, d1y = obs.y + py * detourR;
+            var d2x = obs.x - px * detourR, d2y = obs.y - py * detourR;
+            var detour;
+            if (!ptInObs(d1x, d1y)) detour = { x: d1x, y: d1y, type: 'detour' };
+            else if (!ptInObs(d2x, d2y)) detour = { x: d2x, y: d2y, type: 'detour' };
+            else detour = { x: obs.x + px * (detourR + 50), y: obs.y + py * (detourR + 50), type: 'detour' };
+            safeWaypoints.push(detour);
+          }
+        }
+      }
+    }
+
+    // === Simulation ===
+    function normalizeAngle(a) {
+      while (a > Math.PI) a -= 2 * Math.PI;
+      while (a < -Math.PI) a += 2 * Math.PI;
+      return a;
+    }
+
+    function updateSim(dt) {
+      if (paused || state === 'DONE' || !missionData) return;
+      if (state === 'LOITER') {
+        if (!loiterCenter) { state = 'FLY'; return; }
+        var w = SPD / loiterR;
+        loiterAngle += w * dt;
+        loiterRevs += w * dt / (2 * Math.PI);
+        pos.x = loiterCenter.x + loiterR * Math.cos(loiterAngle);
+        pos.y = loiterCenter.y + loiterR * Math.sin(loiterAngle);
+        heading = normalizeAngle(loiterAngle + Math.PI / 2);
+        distance += SPD * dt; battery -= 0.03 * dt;
+        markCoverage(loiterCenter.x, loiterCenter.y, loiterR + 30);
+        if (loiterRevs >= 1.0) {
+          nLoitersDone++; state = 'FLY'; loiterCenter = null; wpIdx++;
+        }
+        updateDroneMesh(); return;
+      }
+      if (wpIdx >= safeWaypoints.length) { state = 'DONE'; return; }
+      var target = safeWaypoints[wpIdx];
+      var distT = Math.sqrt((target.x - pos.x) * (target.x - pos.x) + (target.y - pos.y) * (target.y - pos.y));
+      var th = Math.atan2(target.y - pos.y, target.x - pos.x);
+      var err = normalizeAngle(th - heading);
+      var mt = TURN_RATE * dt;
+      if (Math.abs(err) > mt) heading += err > 0 ? mt : -mt;
+      else heading = th;
+      heading = normalizeAngle(heading);
+      var d = SPD * dt;
+      pos.x += d * Math.cos(heading); pos.y += d * Math.sin(heading);
+      distance += d; battery -= 0.05 * dt;
+      markCoverage(pos.x, pos.y, isLAC ? 120 : 50);
+      var captureR = (target.type === 'return' || target.type === 'home') ? 60 : (isLAC ? 50 : 20);
+      if (distT < captureR) {
+        if (target.type === 'loiter') {
+          state = 'LOITER'; loiterCenter = { x: target.x, y: target.y };
+          loiterAngle = heading - Math.PI / 2; loiterRevs = 0;
+          loiterR = target.radius || 60;
+        } else { wpIdx++; }
+      }
+      updateDroneMesh();
+    }
+
+    function markCoverage(cx, cy, radius) {
+      var res = missionData.map.resolution || 10;
+      var gcx = Math.floor(cx / res), gcy = Math.floor(cy / res);
+      var rc = Math.ceil(radius / res);
+      for (var dx = -rc; dx <= rc; dx++) {
+        for (var dy = -rc; dy <= rc; dy++) {
+          if (dx * dx + dy * dy > rc * rc) continue;
+          var nx = gcx + dx, ny = gcy + dy, key = nx + ',' + ny;
+          if (coveredSet.has(key)) continue;
+          var wx = nx * res, wy = ny * res;
+          if (wx < 0 || wx >= missionData.map.width || wy < 0 || wy >= missionData.map.height) continue;
+          if (ptInObs(wx, wy)) continue;
+          coveredSet.add(key);
+          var baseH = isLAC ? getTerrainHeight(wx, wy) : 0;
+          var tile = new THREE.Mesh(
+            new THREE.PlaneGeometry(res, res),
+            new THREE.MeshBasicMaterial({ color: isLAC ? 0x00aa44 : 0x1db954, transparent: true, opacity: isLAC ? 0.25 : 0.35, side: THREE.DoubleSide })
+          );
+          tile.rotation.x = -Math.PI / 2;
+          tile.position.set(wx + res / 2, baseH + 0.5, wy + res / 2);
+          scene.add(tile); coverageMeshes.push(tile);
+        }
+      }
+    }
+
+    function updateDroneMesh() {
+      if (!droneMesh) return;
+      var baseH = isLAC ? getTerrainHeight(pos.x, pos.y) : 0;
+      droneMesh.position.set(pos.x, baseH + DRONE_ALT + Math.sin(simTime * 3) * 3, pos.y);
+      droneMesh.rotation.y = -heading + Math.PI / 2;
+      var trailH = baseH + DRONE_ALT - 2;
+      trailPoints.push(new THREE.Vector3(pos.x, trailH, pos.y));
+      if (trailPoints.length > 3000) trailPoints.shift();
+      if (trailLine && trailPoints.length > 1) {
+        trailLine.geometry.dispose();
+        trailLine.geometry = new THREE.BufferGeometry().setFromPoints(trailPoints);
+      }
+    }
+
+    // === UI ===
+    function updateUI() {
+      if (!missionData) return;
+      var totalLoiters = missionData.loiters.length;
+      var W = missionData.map.width, H = missionData.map.height;
+      var res = missionData.map.resolution || 10;
+      var totalCells = Math.floor(W / res) * Math.floor(H / res);
+      var covPct = Math.min(100, (coveredSet.size / totalCells) * 100);
+
+      document.getElementById('status').textContent =
+        state === 'DONE' ? 'MISSION COMPLETE' :
+          state === 'LOITER' ? 'LOITERING (' + (nLoitersDone + 1) + '/' + totalLoiters + ')' :
+            wpIdx >= safeWaypoints.length - 1 ? 'RETURNING HOME' :
+              'EN ROUTE > L' + (nLoitersDone + 1);
+      document.getElementById('status').className = 'val ' + (state === 'DONE' ? 'green' : state === 'LOITER' ? 'warn' : 'accent');
+      document.getElementById('coverage').textContent = covPct.toFixed(1) + '%';
+      document.getElementById('covBar').style.width = covPct + '%';
+      var bat = Math.max(0, battery);
+      document.getElementById('battery').textContent = bat.toFixed(0) + '%';
+      document.getElementById('batBar').style.width = bat + '%';
+      document.getElementById('batBar').className = 'bar-fill ' + (bat < 20 ? 'danger' : bat < 40 ? 'warn' : 'green');
+      document.getElementById('loiterCount').textContent = nLoitersDone + ' / ' + totalLoiters;
+      document.getElementById('distance').textContent = (distance >= 1000 ? (distance / 1000).toFixed(1) + ' km' : distance.toFixed(0) + ' m');
+      document.getElementById('speedDisp').textContent = speed.toFixed(1) + 'x';
+
+      var cl = document.getElementById('checklist'); cl.innerHTML = '';
+      for (var i = 0; i < totalLoiters; i++) {
+        var li = document.createElement('li');
+        var done = i < nLoitersDone, active = i === nLoitersDone && state === 'LOITER';
+        li.className = done ? 'done' : active ? 'active' : '';
+        li.textContent = (done ? '> ' : active ? '>> ' : '  ') + 'Loiter ' + (i + 1);
+        cl.appendChild(li);
+      }
+      var retLi = document.createElement('li');
+      retLi.className = state === 'DONE' ? 'done' : '';
+      retLi.textContent = (state === 'DONE' ? '> ' : '  ') + 'Return HOME';
+      cl.appendChild(retLi);
+
+      missionData.loiters.forEach(function (l, i) {
+        var mesh = loiterMeshes[i * 2];
+        if (!mesh) return;
+        if (i < nLoitersDone) { mesh.material.color.set(0x1db954); mesh.material.opacity = 0.7; }
+        else if (i === nLoitersDone && state === 'LOITER') { mesh.material.color.set(0x00d4ff); mesh.material.opacity = 0.8; }
+      });
+    }
+
+    // === Controls ===
+    function togglePause() {
+      paused = !paused;
+      document.getElementById('btnPlay').textContent = paused ? 'Play' : 'Pause';
+      document.getElementById('btnPlay').className = paused ? 'btn active' : 'btn';
+    }
+    function changeSpeed(delta) { speed = Math.max(0.5, Math.min(10, speed + delta)); }
+    function resetMission() {
+      if (!missionData) return;
+      wpIdx = 0; state = 'FLY'; nLoitersDone = 0; distance = 0; battery = 100;
+      pos = { x: missionData.home.x, y: missionData.home.y };
+      heading = 0; trailPoints = []; coveredSet.clear();
+      coverageMeshes.forEach(function (m) { scene.remove(m); m.geometry.dispose(); m.material.dispose(); });
+      coverageMeshes = [];
+      loiterMeshes.forEach(function (m, i) { if (i % 2 === 0 && m.material) { m.material.color.set(0xffb040); m.material.opacity = 0.5; } });
+      computeSafePath();
+    }
+    function newMission() {
+      document.getElementById('loading').style.display = 'flex';
+      document.getElementById('loading').querySelector('p').textContent = 'Run: python export_mission.py then refresh';
+      setTimeout(function () { location.reload(); }, 3000);
+    }
+
+    // === Loop ===
+    function animate() {
+      requestAnimationFrame(animate);
+      var dt = 1 / 60; simTime += dt;
+      for (var i = 0; i < Math.ceil(speed * 2); i++) updateSim(dt * 0.5);
+      controls.update(); updateUI();
+      renderer.render(scene, camera);
+    }
+
+    // === Start ===
+    async function start() {
+      init();
+      try { var resp = await fetch('mission.json'); missionData = await resp.json(); }
+      catch (e) { document.getElementById('loading').querySelector('p').textContent = 'Run: python export_mission.py first!'; return; }
+      pos = { x: missionData.home.x, y: missionData.home.y };
+      computeSafePath();
+      buildScene(missionData);
+      document.getElementById('loading').style.display = 'none';
+      animate();
+    }
+    start();
+  </script>
+</body>
+
+</html>
