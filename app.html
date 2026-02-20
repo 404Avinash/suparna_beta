@@ -1,0 +1,344 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUPARNA - Mission Control</title>
+    <meta name="description"
+        content="SUPARNA PCCE Mission Control - Physics-Constrained Coverage Engine for autonomous ISR">
+    <link rel="stylesheet" href="/css/main.css">
+</head>
+
+<body>
+    <div class="app">
+        <!-- Sidebar -->
+        <aside class="sidebar">
+            <div class="sidebar-brand">S</div>
+            <nav class="sidebar-nav">
+                <div class="nav-item active" data-page="viewer" onclick="navigate('viewer')">
+                    <span>&#9651;</span>
+                    <span class="tooltip">Mission Control</span>
+                </div>
+                <div class="nav-item" data-page="planner" onclick="navigate('planner')">
+                    <span>&#9881;</span>
+                    <span class="tooltip">Mission Planner</span>
+                </div>
+                <div class="nav-item" data-page="telemetry" onclick="navigate('telemetry')">
+                    <span>&#9889;</span>
+                    <span class="tooltip">Telemetry</span>
+                </div>
+                <div class="nav-item" data-page="exports" onclick="navigate('exports')">
+                    <span>&#8681;</span>
+                    <span class="tooltip">Export Center</span>
+                </div>
+            </nav>
+            <div class="sidebar-bottom">
+                <div class="nav-item" onclick="window.open('https://github.com/404Avinash/suparna_beta','_blank')">
+                    <span style="font-size:16px">GH</span>
+                    <span class="tooltip">GitHub</span>
+                </div>
+            </div>
+        </aside>
+
+        <!-- Main -->
+        <div class="main">
+            <!-- Top Bar -->
+            <header class="topbar">
+                <div>
+                    <div class="topbar-title">SUPARNA</div>
+                    <div class="topbar-subtitle">Physics-Constrained Coverage Engine</div>
+                </div>
+                <div class="topbar-spacer"></div>
+                <div class="topbar-status">
+                    <span class="status-dot"></span>
+                    <span id="connStatus">PCCE Online</span>
+                </div>
+                <div class="topbar-clock" id="clock">--:--:--</div>
+            </header>
+
+            <!-- Content -->
+            <div class="content">
+
+                <!-- PAGE 1: Mission Control (3D Viewer) -->
+                <div class="page active" id="page-viewer">
+                    <div class="viewer-wrap">
+                        <div id="viewer-canvas-wrap"></div>
+
+                        <!-- HUD Top Left: Mission Status -->
+                        <div class="viewer-hud hud-top-left">
+                            <div class="card" style="min-width:220px;padding:14px;background:rgba(6,10,19,0.85)">
+                                <div class="text-xs text-muted uppercase tracking-wide mb-8">Mission</div>
+                                <div class="font-bold text-accent" id="hud-status" style="font-size:16px">STANDBY</div>
+                                <div class="text-sm text-secondary mt-8" id="hud-phase">Load a mission to begin</div>
+                                <hr class="divider">
+                                <div class="flex justify-between text-sm" style="gap:18px">
+                                    <div>
+                                        <div class="text-xs text-muted">Loiters</div>
+                                        <div class="font-bold" id="hud-loiters">0/0</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-muted">Distance</div>
+                                        <div class="font-bold" id="hud-distance">0 m</div>
+                                    </div>
+                                    <div>
+                                        <div class="text-xs text-muted">Coverage</div>
+                                        <div class="font-bold text-accent" id="hud-coverage">0%</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- HUD Top Right: Controls -->
+                        <div class="viewer-hud hud-top-right">
+                            <div class="flex gap-8">
+                                <button class="btn btn-sm" id="btnPlayPause"
+                                    onclick="viewerTogglePause()">Pause</button>
+                                <button class="btn btn-sm" onclick="viewerSlower()">-</button>
+                                <button class="btn btn-sm" onclick="viewerFaster()">+</button>
+                                <button class="btn btn-sm" onclick="viewerReset()">Reset</button>
+                                <div class="btn btn-sm font-mono" id="hud-speed">2.0x</div>
+                            </div>
+                        </div>
+
+                        <!-- HUD Bottom: Telemetry Strip -->
+                        <div class="viewer-hud hud-bottom">
+                            <div class="hud-strip">
+                                <div class="hud-stat">
+                                    <div class="hud-stat-label">Altitude</div>
+                                    <div class="hud-stat-value cyan" id="hud-alt">--</div>
+                                </div>
+                                <div class="hud-stat">
+                                    <div class="hud-stat-label">Speed</div>
+                                    <div class="hud-stat-value" id="hud-spd">--</div>
+                                </div>
+                                <div class="hud-stat">
+                                    <div class="hud-stat-label">Heading</div>
+                                    <div class="hud-stat-value" id="hud-hdg">--</div>
+                                </div>
+                                <div class="hud-stat">
+                                    <div class="hud-stat-label">Energy</div>
+                                    <div class="hud-stat-value green" id="hud-energy">--</div>
+                                </div>
+                                <div class="hud-stat">
+                                    <div class="hud-stat-label">Battery</div>
+                                    <div class="hud-stat-value" id="hud-bat">--</div>
+                                </div>
+                                <div style="flex:1"></div>
+                                <div class="hud-stat">
+                                    <div class="hud-stat-label">Status</div>
+                                    <div class="hud-stat-value amber" id="hud-state">IDLE</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 2: Mission Planner -->
+                <div class="page" id="page-planner">
+                    <div class="planner-layout">
+                        <div class="planner-sidebar">
+                            <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Mission Planner</h2>
+                            <p class="text-sm text-muted mb-16">Configure and generate a PCCE mission</p>
+
+                            <div class="form-group">
+                                <label class="form-label">Map Type</label>
+                                <select class="form-select" id="plannerMap">
+                                    <option value="lac">LAC Ladakh Border Terrain</option>
+                                    <option value="random">Random Flat Map</option>
+                                </select>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Altitude (m AMSL)</label>
+                                <input type="range" id="plannerAlt" min="0" max="5000" step="100" value="4000">
+                                <div class="flex justify-between text-xs text-muted mt-8">
+                                    <span>Sea Level</span>
+                                    <span class="font-mono font-bold text-accent" id="plannerAltVal">4000m</span>
+                                    <span>5000m</span>
+                                </div>
+                            </div>
+
+                            <div class="form-group">
+                                <label class="form-label">Seed (optional)</label>
+                                <input type="number" class="form-input" id="plannerSeed" placeholder="Random">
+                            </div>
+
+                            <hr class="divider">
+
+                            <!-- ISA Preview -->
+                            <div class="card mb-16" style="padding:14px" id="isaPreview">
+                                <div class="card-title mb-8">ISA Performance Preview</div>
+                                <div id="isaData" class="text-sm" style="line-height:1.8;color:var(--text-secondary)">
+                                    Adjust altitude to see ISA corrections
+                                </div>
+                            </div>
+
+                            <button class="btn btn-primary w-full" id="btnGenerate" onclick="generateMission()">
+                                Generate Mission
+                            </button>
+
+                            <div id="plannerResult" class="mt-16" style="display:none">
+                                <hr class="divider">
+                                <div class="card-title mb-8">Mission Generated</div>
+                                <div id="plannerStats" class="text-sm" style="line-height:1.8"></div>
+                                <button class="btn btn-sm mt-16" onclick="navigate('viewer')">View in 3D</button>
+                            </div>
+                        </div>
+
+                        <div class="planner-preview" id="plannerPreviewArea">
+                            <div
+                                style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px">
+                                <div style="font-size:64px;opacity:0.15">&#9651;</div>
+                                <div class="text-muted">Generate a mission to see the 3D preview</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 3: Telemetry -->
+                <div class="page" id="page-telemetry">
+                    <div class="telemetry-layout">
+                        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Telemetry Dashboard</h2>
+                        <p class="text-sm text-muted mb-24">Real-time mission analytics and energy tracking</p>
+
+                        <!-- Performance Cards -->
+                        <div class="stats-grid stats-grid-4 mb-24" id="perfCards">
+                            <div class="card">
+                                <div class="card-title">Cruise Speed</div>
+                                <div class="card-value accent" id="tel-speed">--</div>
+                                <div class="card-sub">m/s (ISA corrected)</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">Power Draw</div>
+                                <div class="card-value warn" id="tel-power">--</div>
+                                <div class="card-sub">watts</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">Loiter Radius</div>
+                                <div class="card-value" id="tel-radius">--</div>
+                                <div class="card-sub">meters (min safe)</div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title">Air Density</div>
+                                <div class="card-value" id="tel-density">--</div>
+                                <div class="card-sub">kg/m3</div>
+                            </div>
+                        </div>
+
+                        <!-- Energy Breakdown -->
+                        <div class="stats-grid" style="grid-template-columns:320px 1fr;gap:24px">
+                            <div class="card">
+                                <div class="card-title mb-16">Energy Budget</div>
+                                <canvas id="energyDonut" width="280" height="280"></canvas>
+                                <div id="energyLegend" class="mt-16 text-sm"></div>
+                            </div>
+                            <div class="card">
+                                <div class="card-title mb-16">Phase Timeline</div>
+                                <div id="phaseTimeline"></div>
+                                <hr class="divider">
+                                <div class="card-title mb-8">Mission Summary</div>
+                                <div id="missionSummary" class="text-sm" style="line-height:1.8"></div>
+                            </div>
+                        </div>
+
+                        <!-- Algorithms -->
+                        <div class="card mt-24">
+                            <div class="card-title mb-16">PCCE Algorithm Suite</div>
+                            <div class="flex gap-8" style="flex-wrap:wrap" id="algoTags">
+                                <span class="tag tag-green">Greedy Set Cover</span>
+                                <span class="tag tag-cyan">Dubins Curves (6 types, O(1))</span>
+                                <span class="tag tag-amber">A* Search (O(V log V))</span>
+                                <span class="tag tag-red">Bug2 7-ray (O(r))</span>
+                                <span class="tag tag-purple">NN-TSP (O(k2))</span>
+                                <span class="tag tag-cyan">ISA Atmosphere</span>
+                                <span class="tag tag-amber">Energy Budget Manager</span>
+                                <span class="tag tag-red">Loiter-to-Land</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- PAGE 4: Export Center -->
+                <div class="page" id="page-exports">
+                    <div class="export-layout">
+                        <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Export Center</h2>
+                        <p class="text-sm text-muted mb-24">Download mission deliverables</p>
+
+                        <div class="stats-grid" style="grid-template-columns:repeat(3,1fr)">
+                            <div class="card export-card flex-col"
+                                style="align-items:center;text-align:center;padding:32px">
+                                <div class="export-icon kmz">&#127758;</div>
+                                <h3 style="margin-top:12px;font-size:16px;font-weight:700">KMZ File</h3>
+                                <p class="text-sm text-muted mt-8">Google Earth flight path, loiter zones, obstacles</p>
+                                <a href="/api/export/kmz" class="btn btn-primary mt-16" download>Download KMZ</a>
+                            </div>
+                            <div class="card export-card flex-col"
+                                style="align-items:center;text-align:center;padding:32px">
+                                <div class="export-icon report">&#128202;</div>
+                                <h3 style="margin-top:12px;font-size:16px;font-weight:700">Mission Report</h3>
+                                <p class="text-sm text-muted mt-8">Full mission report with energy breakdown</p>
+                                <a href="/api/export/report" class="btn btn-primary mt-16" download>Download Report</a>
+                            </div>
+                            <div class="card export-card flex-col"
+                                style="align-items:center;text-align:center;padding:32px">
+                                <div class="export-icon" style="background:rgba(168,85,247,0.15);color:#a855f7">
+                                    &#128196;</div>
+                                <h3 style="margin-top:12px;font-size:16px;font-weight:700">Mission JSON</h3>
+                                <p class="text-sm text-muted mt-8">Raw mission data for integration</p>
+                                <a href="/mission.json" class="btn btn-primary mt-16" download>Download JSON</a>
+                            </div>
+                        </div>
+
+                        <!-- Stats Table -->
+                        <div class="card mt-24">
+                            <div class="card-title mb-16">Mission Statistics</div>
+                            <div class="table-wrap">
+                                <table id="statsTable">
+                                    <thead>
+                                        <tr>
+                                            <th>Metric</th>
+                                            <th>Value</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="statsBody">
+                                        <tr>
+                                            <td colspan="2" class="text-muted">Generate a mission to see stats</td>
+                                        </tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- ISA Table -->
+                        <div class="card mt-24">
+                            <div class="card-title mb-16">ISA Performance Table</div>
+                            <div class="table-wrap">
+                                <table>
+                                    <thead>
+                                        <tr>
+                                            <th>Altitude</th>
+                                            <th>Speed (m/s)</th>
+                                            <th>Power (W)</th>
+                                            <th>Loiter R (m)</th>
+                                            <th>Stall (m/s)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody id="isaTable"></tbody>
+                                </table>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div><!-- /content -->
+        </div><!-- /main -->
+    </div><!-- /app -->
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+    <script src="/js/app.js"></script>
+
+</body>
+
+</html>
