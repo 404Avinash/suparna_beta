@@ -3,14 +3,14 @@
   "platform": "SUPARNA Fixed-Wing ISR UAS",
   "engine": "Physics-Constrained Coverage Engine (PCCE)",
   "map": {
-    "width_m": 5000.0,
-    "height_m": 3500.0,
-    "type": "lac"
+    "width_m": 1000.0,
+    "height_m": 700.0,
+    "type": "random"
   },
   "coverage": {
-    "loiter_count": 50,
-    "obstacle_count": 11,
-    "waypoint_count": 52
+    "loiter_count": 10,
+    "obstacle_count": 9,
+    "waypoint_count": 12
   },
   "algorithms_used": [
     "Greedy Set Cover (Coverage Planner)",
@@ -25,746 +25,186 @@
     "battery_capacity_wh": 370.0,
     "reserve_wh": 81.4,
     "usable_wh": 288.6,
-    "total_energy_wh": 216.2,
-    "remaining_wh": 153.8,
-    "remaining_pct": 41.6,
-    "total_distance_m": 126251.0,
-    "total_duration_min": 95.5,
+    "total_energy_wh": 28.7,
+    "remaining_wh": 341.3,
+    "remaining_pct": 92.2,
+    "total_distance_m": 16975.0,
+    "total_duration_min": 13.2,
     "energy_by_type": {
-      "climb": 4.1,
-      "transit": 44.9,
-      "loiter": 112.5,
-      "rtb": 2.9,
-      "descent": 51.8
+      "climb": 2.2,
+      "transit": 5.3,
+      "loiter": 8.8,
+      "rtb": 1.5,
+      "descent": 10.9
     },
     "phases": [
       {
         "name": "Climb to altitude",
         "type": "climb",
-        "distance_m": 1160.0,
-        "duration_s": 50.0,
-        "energy_wh": 4.1
+        "distance_m": 618.7,
+        "duration_s": 26.7,
+        "energy_wh": 2.2
       },
       {
         "name": "Transit \u2192 Loiter 1",
         "type": "transit",
-        "distance_m": 461.0,
-        "duration_s": 19.9,
-        "energy_wh": 0.9
+        "distance_m": 83.6,
+        "duration_s": 3.6,
+        "energy_wh": 0.2
       },
       {
         "name": "Loiter 1",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 2",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 2",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 3",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 3",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 4",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 4",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 5",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 5",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 6",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 6",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 7",
         "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 7",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 8",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 550.2,
+        "duration_s": 23.7,
+        "energy_wh": 1.1
       },
       {
         "name": "Loiter 8",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 9",
         "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
+        "distance_m": 275.1,
+        "duration_s": 11.9,
+        "energy_wh": 0.5
       },
       {
         "name": "Loiter 9",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
       },
       {
         "name": "Transit \u2192 Loiter 10",
         "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
+        "distance_m": 991.9,
+        "duration_s": 42.8,
+        "energy_wh": 1.9
       },
       {
         "name": "Loiter 10",
         "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 11",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 11",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 12",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 12",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 13",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 13",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 14",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 14",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 15",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 15",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 16",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 16",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 17",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 17",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 18",
-        "type": "transit",
-        "distance_m": 495.0,
+        "distance_m": 493.9,
         "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 18",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 19",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 19",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 20",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 20",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 21",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 21",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 22",
-        "type": "transit",
-        "distance_m": 782.6,
-        "duration_s": 33.7,
-        "energy_wh": 1.5
-      },
-      {
-        "name": "Loiter 22",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 23",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 23",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 24",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 24",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 25",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 25",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 26",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 26",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 27",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 27",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 28",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 28",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 29",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 29",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 30",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 30",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 31",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 31",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 32",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 32",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 33",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 33",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 34",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 34",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 35",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 35",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 36",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 36",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 37",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 37",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 38",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 38",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 39",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 39",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 40",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 40",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 41",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 41",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 42",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 42",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 43",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 43",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 44",
-        "type": "transit",
-        "distance_m": 495.0,
-        "duration_s": 21.3,
-        "energy_wh": 1.0
-      },
-      {
-        "name": "Loiter 44",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 45",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 45",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 46",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 46",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 47",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 47",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 48",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 48",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 49",
-        "type": "transit",
-        "distance_m": 3913.1,
-        "duration_s": 168.7,
-        "energy_wh": 7.6
-      },
-      {
-        "name": "Loiter 49",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
-      },
-      {
-        "name": "Transit \u2192 Loiter 50",
-        "type": "transit",
-        "distance_m": 350.0,
-        "duration_s": 15.1,
-        "energy_wh": 0.7
-      },
-      {
-        "name": "Loiter 50",
-        "type": "loiter",
-        "distance_m": 1256.6,
-        "duration_s": 54.2,
-        "energy_wh": 2.3
+        "energy_wh": 0.9
       },
       {
         "name": "Return to Base",
         "type": "rtb",
-        "distance_m": 1503.3,
-        "duration_s": 64.8,
-        "energy_wh": 2.9
+        "distance_m": 790.2,
+        "duration_s": 34.1,
+        "energy_wh": 1.5
       },
       {
-        "name": "Loiter-to-Land (30 loops)",
+        "name": "Loiter-to-Land (16 loops)",
         "type": "descent",
-        "distance_m": 37699.1,
-        "duration_s": 1911.7,
-        "energy_wh": 51.8
+        "distance_m": 7901.7,
+        "duration_s": 400.7,
+        "energy_wh": 10.9
       }
     ]
   },
   "landing": {
     "type": "Loiter-to-Land Spiral Descent",
-    "loops": 27,
-    "start_altitude_m": 150,
-    "energy_wh": 48.5
+    "loops": 13,
+    "start_altitude_m": 80,
+    "energy_wh": 9.3
   }
 }

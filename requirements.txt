@@ -1,12 +1,14 @@
-# Project KALPANA - Swift-Inspired Drone Path Optimization
+# SUPARNA — Physics-Constrained Coverage Engine (PCCE)
 # Core
 numpy>=1.24.0
-shapely>=2.0.0
-networkx>=3.0
 
-# Visualization
-matplotlib>=3.7.0
-pygame>=2.5.0
+# Web Server
+fastapi>=0.100.0
+uvicorn[standard]>=0.22.0
+pydantic>=2.0.0
 
-# Utilities
-dataclasses-json>=0.6.0
+# Legacy (optional)
+# shapely>=2.0.0
+# networkx>=3.0
+# matplotlib>=3.7.0
+# pygame>=2.5.0
