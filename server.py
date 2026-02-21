@@ -43,6 +43,9 @@ class MissionRequest(BaseModel):
     map_type: str = "lac"
     altitude_m: float = 4000.0
     seed: Optional[int] = None
+    latitude: Optional[float] = None
+    longitude: Optional[float] = None
+    custom_obstacles: Optional[list] = None
 
 
 class PerformanceRequest(BaseModel):
@@ -65,7 +68,24 @@ async def generate_mission(req: MissionRequest):
             seed=req.seed,
             map_type=req.map_type,
             altitude_m=req.altitude_m,
+            custom_obstacles=req.custom_obstacles,
         )
+        # Inject coordinates into the saved mission.json
+        if req.latitude is not None and req.longitude is not None:
+            import json
+            try:
+                with open(MISSION_FILE) as f:
+                    mission = json.load(f)
+                mission["coordinates"] = {
+                    "latitude": req.latitude,
+                    "longitude": req.longitude,
+                }
+                if req.custom_obstacles:
+                    mission["custom_obstacles"] = req.custom_obstacles
+                with open(MISSION_FILE, "w") as f:
+                    json.dump(mission, f, indent=2)
+            except Exception:
+                pass
         return JSONResponse(content={
             "success": True,
             "stats": data.get("stats", {}),

@@ -28,7 +28,7 @@ from src.planners.landing import compute_descent_plan
 from src.export.report import export_kmz, export_report
 
 
-def export_mission(seed=None, map_type='random', altitude_m=0.0):
+def export_mission(seed=None, map_type='random', altitude_m=0.0, custom_obstacles=None):
     print("=" * 60)
     print("  SUPARNA - Physics-Constrained Coverage Engine (PCCE)")
     print("=" * 60)
@@ -81,6 +81,18 @@ def export_mission(seed=None, map_type='random', altitude_m=0.0):
             coverage_threshold=98.0,
             max_loiters=50,
         )
+
+    # -- Inject custom restricted zones --
+    if custom_obstacles:
+        from src.core.map import Obstacle
+        for co in custom_obstacles:
+            cx = co.get('x', 0)
+            cy = co.get('y', 0)
+            cr = co.get('radius', 60)
+            smap.obstacles.append(
+                Obstacle(center=Point(cx, cy), radius=cr, is_no_fly=True, name='RESTRICTED')
+            )
+        print(f"  + {len(custom_obstacles)} custom restricted zones injected")
 
     # -- Coverage Planning (Greedy Set Cover) --
     print("\n  Running Greedy Set Cover planner...")

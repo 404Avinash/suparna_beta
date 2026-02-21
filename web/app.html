@@ -8,6 +8,7 @@
     <meta name="description"
         content="SUPARNA PCCE Mission Control - Physics-Constrained Coverage Engine for autonomous ISR">
     <link rel="stylesheet" href="/css/main.css">
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
 </head>
 
 <body>
@@ -91,13 +92,28 @@
 
                         <!-- HUD Top Right: Controls -->
                         <div class="viewer-hud hud-top-right">
-                            <div class="flex gap-8">
+                            <div class="flex gap-8" style="margin-bottom:6px">
                                 <button class="btn btn-sm" id="btnPlayPause"
                                     onclick="viewerTogglePause()">Pause</button>
                                 <button class="btn btn-sm" onclick="viewerSlower()">-</button>
                                 <button class="btn btn-sm" onclick="viewerFaster()">+</button>
                                 <button class="btn btn-sm" onclick="viewerReset()">Reset</button>
                                 <div class="btn btn-sm font-mono" id="hud-speed">2.0x</div>
+                            </div>
+                            <div class="flex gap-8" style="flex-wrap:wrap">
+                                <button class="btn btn-sm" id="btnRestrict" onclick="toggleRestrictMode()"
+                                    style="border-color:rgba(239,68,68,0.4);color:#ff6b6b"
+                                    title="Click to toggle restricted zone marking mode. Left-click on terrain to place, right-click to remove.">🚫
+                                    Mark Restricted</button>
+                                <button class="btn btn-sm" id="btnReplan" onclick="replanWithZones()"
+                                    style="border-color:rgba(0,212,255,0.4);color:#00d4ff"
+                                    title="Replan the mission route around your marked restricted zones">🔄 Replan
+                                    Route</button>
+                                <button class="btn btn-sm" onclick="clearCustomZones()"
+                                    style="border-color:rgba(255,255,255,0.15)"
+                                    title="Remove all custom restricted zones">🗑️ Clear</button>
+                                <div class="btn btn-sm font-mono" id="zoneCount"
+                                    style="color:#ff6b6b;border-color:rgba(239,68,68,0.2)">0 zones</div>
                             </div>
                         </div>
 
@@ -137,25 +153,48 @@
                 <!-- PAGE 2: Mission Planner -->
                 <div class="page" id="page-planner">
                     <div class="planner-layout">
-                        <div class="planner-sidebar">
+                        <div class="planner-sidebar" style="overflow-y:auto">
                             <h2 style="font-size:20px;font-weight:700;margin-bottom:4px">Mission Planner</h2>
-                            <p class="text-sm text-muted mb-16">Configure and generate a PCCE mission</p>
+                            <p class="text-sm text-muted mb-16">Select location → PCCE auto-plans the route</p>
 
+                            <!-- Location Preset -->
                             <div class="form-group">
-                                <label class="form-label">Map Type</label>
-                                <select class="form-select" id="plannerMap">
-                                    <option value="lac">LAC Ladakh Border Terrain</option>
-                                    <option value="random">Random Flat Map</option>
+                                <label class="form-label">📍 Strategic Location</label>
+                                <select class="form-select" id="plannerLocation" onchange="onLocationChange()">
+                                    <option value="0">LAC — Eastern Ladakh</option>
+                                    <option value="1">LoC — Kashmir Sector</option>
+                                    <option value="2">Red Corridor — Chhattisgarh</option>
+                                    <option value="3">Siachen Glacier</option>
+                                    <option value="4">Arunachal Pradesh — McMahon Line</option>
+                                    <option value="custom">Custom Coordinates</option>
                                 </select>
+                            </div>
+
+                            <!-- Coordinate Card -->
+                            <div class="card mb-16" style="padding:12px;border-color:var(--accent)">
+                                <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                                    <div class="form-group" style="margin-bottom:0">
+                                        <label class="form-label">Latitude</label>
+                                        <input type="text" class="form-input" id="plannerLat" value="34.1526"
+                                            style="font-family:var(--font-mono)">
+                                    </div>
+                                    <div class="form-group" style="margin-bottom:0">
+                                        <label class="form-label">Longitude</label>
+                                        <input type="text" class="form-input" id="plannerLon" value="77.5771"
+                                            style="font-family:var(--font-mono)">
+                                    </div>
+                                </div>
+                                <div class="text-xs mt-8" id="coordLabel" style="color:var(--accent)">Ladakh — Eastern
+                                    LAC Sector</div>
                             </div>
 
                             <div class="form-group">
                                 <label class="form-label">Altitude (m AMSL)</label>
-                                <input type="range" id="plannerAlt" min="0" max="5000" step="100" value="4000">
+                                <input type="range" id="plannerAlt" min="0" max="6000" step="100" value="4000">
                                 <div class="flex justify-between text-xs text-muted mt-8">
                                     <span>Sea Level</span>
                                     <span class="font-mono font-bold text-accent" id="plannerAltVal">4000m</span>
-                                    <span>5000m</span>
+                                    <span>6000m</span>
                                 </div>
                             </div>
 
@@ -167,30 +206,59 @@
                             <hr class="divider">
 
                             <!-- ISA Preview -->
-                            <div class="card mb-16" style="padding:14px" id="isaPreview">
-                                <div class="card-title mb-8">ISA Performance Preview</div>
+                            <div class="card mb-16" style="padding:12px">
+                                <div class="card-title mb-8">ISA Performance at Altitude</div>
                                 <div id="isaData" class="text-sm" style="line-height:1.8;color:var(--text-secondary)">
-                                    Adjust altitude to see ISA corrections
-                                </div>
+                                    Loading...</div>
                             </div>
 
-                            <button class="btn btn-primary w-full" id="btnGenerate" onclick="generateMission()">
-                                Generate Mission
+                            <!-- Hidden map type for backend -->
+                            <input type="hidden" id="plannerMap" value="lac">
+
+                            <button class="btn btn-primary w-full" id="btnGenerate" onclick="generateMission()"
+                                style="padding:14px;font-size:15px;font-weight:700">
+                                🚀 Generate Mission
                             </button>
 
                             <div id="plannerResult" class="mt-16" style="display:none">
                                 <hr class="divider">
-                                <div class="card-title mb-8">Mission Generated</div>
+                                <div class="card-title mb-8" style="color:#1db954">✅ Mission Generated</div>
                                 <div id="plannerStats" class="text-sm" style="line-height:1.8"></div>
-                                <button class="btn btn-sm mt-16" onclick="navigate('viewer')">View in 3D</button>
+                                <button class="btn btn-sm mt-16" onclick="navigate('viewer')"
+                                    style="background:var(--accent);color:#000;font-weight:700;width:100%;padding:10px">▶
+                                    View in 3D Simulator</button>
                             </div>
                         </div>
 
+                        <!-- Leaflet Map Preview -->
                         <div class="planner-preview" id="plannerPreviewArea">
+                            <div id="plannerMap-leaflet" style="width:100%;height:100%;border-radius:12px"></div>
+                            <!-- Info overlay on map -->
+                            <div id="mapInfoOverlay"
+                                style="position:absolute;top:16px;left:16px;z-index:1000;background:rgba(10,14,23,0.85);backdrop-filter:blur(12px);padding:12px 16px;border-radius:10px;border:1px solid rgba(0,212,255,0.2);pointer-events:none">
+                                <div
+                                    style="font-size:11px;text-transform:uppercase;letter-spacing:1px;color:var(--accent);margin-bottom:4px">
+                                    Patrol Zone</div>
+                                <div id="mapInfoText" style="font-size:13px;font-weight:600;color:#f1f5f9">LAC — Eastern
+                                    Ladakh</div>
+                                <div id="mapInfoCoords"
+                                    style="font-size:11px;font-family:var(--font-mono);color:var(--text-muted);margin-top:2px">
+                                    34.1526°N 77.5771°E</div>
+                            </div>
+                            <!-- Algorithm tags -->
                             <div
-                                style="display:flex;align-items:center;justify-content:center;height:100%;flex-direction:column;gap:12px">
-                                <div style="font-size:64px;opacity:0.15">&#9651;</div>
-                                <div class="text-muted">Generate a mission to see the 3D preview</div>
+                                style="position:absolute;bottom:16px;left:16px;right:16px;z-index:1000;display:flex;flex-wrap:wrap;gap:6px;pointer-events:none">
+                                <span class="algo-badge" style="border-color:#1db954;color:#1db954">Greedy Set
+                                    Cover</span>
+                                <span class="algo-badge" style="border-color:#00d4ff;color:#00d4ff">Dubins Curves</span>
+                                <span class="algo-badge" style="border-color:#f0c040;color:#f0c040">A*
+                                    Pathfinding</span>
+                                <span class="algo-badge" style="border-color:#e04040;color:#e04040">Bug2
+                                    Avoidance</span>
+                                <span class="algo-badge" style="border-color:#c080ff;color:#c080ff">NN-TSP</span>
+                                <span class="algo-badge" style="border-color:#80d0ff;color:#80d0ff">ISA Atmo</span>
+                                <span class="algo-badge"
+                                    style="border-color:#ffcc00;color:#ffcc00">Loiter-to-Land</span>
                             </div>
                         </div>
                     </div>
@@ -335,6 +403,7 @@
         </div><!-- /main -->
     </div><!-- /app -->
 
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
     <script src="/js/app.js"></script>
