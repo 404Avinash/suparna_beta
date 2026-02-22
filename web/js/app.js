@@ -724,34 +724,6 @@ function viewerReset() {
 }
 
 // ============================================================
-//  AUTONOMOUS MISSION START
-// ============================================================
-function startMission() {
-    // Gate: Only start if mission exists
-    if (!missionData) {
-        alert('Load a mission first');
-        return;
-    }
-    // Reset sim state to clean start
-    wpIdx = 0; state = 'FLY'; nLoitersDone = 0; distance = 0; battery = 100;
-    energyUsedWh = 0; descentWpIdx = 0; currentAltAGL = DRONE_ALT;
-    pos = { x: missionData.home.x, y: missionData.home.y };
-    heading = 0; trailPoints = []; coveredSet.clear(); paused = false;
-    simTime = 0; speed = 1.0;
-    // Rebuild scene with fresh drone and paths
-    buildScene(missionData);
-    computeSafePath();
-    // Set mission as active
-    missionStarted = true;
-    // Update UI to show playback controls
-    updateHUDVisibility();
-    // Update status
-    setHUD('status', 'FLIGHT');
-    setHUD('phase', 'Autonomous coverage in progress');
-    console.log('[SUPARNA] Mission started: autonomous flight engaged');
-}
-
-// ============================================================
 //  CLICK-TO-RESTRICT ZONES
 // ============================================================
 function toggleRestrictMode() {
@@ -861,23 +833,26 @@ function clearCustomZones() {
 }
 
 async function startMission() {
-    var btn = document.getElementById('btnStart');
-    if (btn) { btn.textContent = '\u23F3 Planning...'; btn.disabled = true; }
+    var btn = document.getElementById('btnReplan');
+    if (btn) { btn.textContent = '⏳ Planning...'; btn.disabled = true; }
 
     // Disable restrict mode when starting
     if (restrictMode) toggleRestrictMode();
 
+    // Use current mission's map type, or default to LAC
     var mapType = (missionData && missionData.map) ? missionData.map.type : 'lac';
     var coords = (missionData && missionData.coordinates) || {};
     var lat = coords.latitude || 34.1526;
     var lon = coords.longitude || 77.5771;
     var alt = parseFloat((document.getElementById('plannerAlt') || {}).value) || 4000;
 
+    // Collect marked restricted zones
     var zones = customObstacles.map(function (co) {
         return { x: co.x, y: co.y, radius: co.radius };
     });
 
     try {
+        console.log('[SUPARNA] Calling /api/mission/generate with zones:', zones.length);
         var resp = await fetch('/api/mission/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
@@ -891,27 +866,47 @@ async function startMission() {
         });
         var result = await resp.json();
         if (btn) { btn.disabled = false; }
+        
         if (result.success) {
-            // Set mission as started and reload
-            missionStarted = true;
-            paused = false;
-            viewerInitialized = false;
-            animRunning = false;
-            if (renderer) {
-                var c = document.getElementById('viewer-canvas-wrap');
-                if (c) c.innerHTML = '';
-                renderer = null; scene = null;
+            console.log('[SUPARNA] Mission generated successfully');
+            // Load the newly generated mission.json
+            await loadMission();
+            // Reset simulation state for fresh start
+            wpIdx = 0; state = 'FLY'; nLoitersDone = 0; distance = 0; battery = 100;
+            energyUsedWh = 0; descentWpIdx = 0; currentAltAGL = DRONE_ALT;
+            simTime = 0; speed = 1.0; paused = false;
+            if (missionData) {
+                pos = { x: missionData.home.x, y: missionData.home.y };
+                heading = 0;
             }
-            initViewer();
-            // Update button to show mission is active
-            if (btn) { btn.textContent = '\u2705 MISSION ACTIVE'; btn.style.background = 'rgba(29,185,84,0.3)'; btn.style.borderColor = '#1db954'; }
+            trailPoints = []; coveredSet.clear();
+            // Rebuild scene with fresh drone
+            if (missionData) {
+                buildScene(missionData);
+                computeSafePath();
+            }
+            // Activate mission
+            missionStarted = true;
+            // Update UI
+            if (btn) { 
+                btn.textContent = '✈️ FLYING';
+                btn.style.background = 'rgba(29,185,84,0.2)';
+                btn.style.borderColor = '#1db954';
+            }
             updateHUDVisibility();
+            setHUD('status', 'FLIGHT');
+            setHUD('phase', 'Autonomous coverage in progress');
+            console.log('[SUPARNA] Mission started - autonomous flight engaged');
         } else {
-            if (btn) { btn.textContent = '\ud83d\ude80 START MISSION'; }
-            alert('Mission planning failed: ' + (result.detail || 'Unknown'));
+            if (btn) { btn.textContent = '🚀 START MISSION'; }
+            alert('Mission planning failed: ' + (result.detail || 'Unknown error'));
         }
     } catch (e) {
-        if (btn) { btn.textContent = '\ud83d\ude80 START MISSION'; btn.disabled = false; }
+        if (btn) { 
+            btn.textContent = '🚀 START MISSION'; 
+            btn.disabled = false; 
+        }
+        console.error('[SUPARNA] Mission generation error:', e);
         alert('Mission planning failed: ' + e.message);
     }
 }
