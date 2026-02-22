@@ -917,19 +917,28 @@ async function startMission() {
 }
 
 function updateHUDVisibility() {
-    // Show playback controls only after mission started
-    var controls = document.getElementById('hud-playback');
-    if (controls) controls.style.display = missionStarted ? 'flex' : 'none';
-    // Update start button state
-    var btn = document.getElementById('btnStart');
-    if (btn && !missionStarted) {
-        btn.textContent = '\ud83d\ude80 START MISSION';
-        btn.style.background = '';
-        btn.style.borderColor = '';
+    // Show playback controls after mission started, hide zone setup
+    var playback = document.getElementById('hud-playback');
+    var zoneSetup = document.getElementById('hud-zone-setup');
+    if (playback) playback.style.display = missionStarted ? 'flex' : 'none';
+    if (zoneSetup) zoneSetup.style.display = missionStarted ? 'none' : 'flex';
+    // Update button state based on mission status
+    var btn = document.getElementById('btnReplan');
+    if (btn) {
+        if (missionStarted) {
+            btn.disabled = true;
+            btn.textContent = '✈️  FLYING';
+            btn.style.background = 'rgba(29,185,84,0.2)';
+            btn.style.borderColor = '#1db954';
+        } else {
+            btn.disabled = false;
+            btn.textContent = '🚀 START MISSION';
+            btn.style.background = 'rgba(0,212,255,0.15)';
+            btn.style.borderColor = 'rgba(0,212,255,0.4)';
+        }
     }
-    // Update status
     var stEl = document.getElementById('hud-state');
-    if (stEl && !missionStarted) stEl.textContent = 'STANDBY';
+    if (stEl) stEl.textContent = missionStarted ? 'ACTIVE' : 'STANDBY';
 }
 
 function updateZoneCount() {
