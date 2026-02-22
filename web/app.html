@@ -92,28 +92,29 @@
 
                         <!-- HUD Top Right: Controls -->
                         <div class="viewer-hud hud-top-right">
-                            <div class="flex gap-8" style="margin-bottom:6px">
-                                <button class="btn btn-sm" id="btnPlayPause"
-                                    onclick="viewerTogglePause()">Pause</button>
-                                <button class="btn btn-sm" onclick="viewerSlower()">-</button>
-                                <button class="btn btn-sm" onclick="viewerFaster()">+</button>
-                                <button class="btn btn-sm" onclick="viewerReset()">Reset</button>
-                                <div class="btn btn-sm font-mono" id="hud-speed">2.0x</div>
-                            </div>
-                            <div class="flex gap-8" style="flex-wrap:wrap">
+                            <!-- Pre-Mission: Zone Setup -->
+                            <div id="hud-zone-setup" class="flex gap-8" style="flex-wrap:wrap">
                                 <button class="btn btn-sm" id="btnRestrict" onclick="toggleRestrictMode()"
                                     style="border-color:rgba(239,68,68,0.4);color:#ff6b6b"
                                     title="Click to toggle restricted zone marking mode. Left-click on terrain to place, right-click to remove.">🚫
                                     Mark Restricted</button>
-                                <button class="btn btn-sm" id="btnReplan" onclick="replanWithZones()"
-                                    style="border-color:rgba(0,212,255,0.4);color:#00d4ff"
-                                    title="Replan the mission route around your marked restricted zones">🔄 Replan
-                                    Route</button>
+                                <button class="btn btn-sm" id="btnReplan" onclick="startMission()"
+                                    style="border-color:rgba(0,212,255,0.4);color:#00d4ff;background:rgba(0,212,255,0.15);font-weight:700"
+                                    title="Auto-plan mission and begin autonomous flight">🚀 START MISSION</button>
                                 <button class="btn btn-sm" onclick="clearCustomZones()"
                                     style="border-color:rgba(255,255,255,0.15)"
-                                    title="Remove all custom restricted zones">🗑️ Clear</button>
+                                    title="Remove all custom restricted zones">🗑️ Clear Zones</button>
                                 <div class="btn btn-sm font-mono" id="zoneCount"
                                     style="color:#ff6b6b;border-color:rgba(239,68,68,0.2)">0 zones</div>
+                            </div>
+                            <!-- Post-Mission: Playback Controls -->
+                            <div id="hud-playback" class="flex gap-8" style="display:none;margin-bottom:6px">
+                                <button class="btn btn-sm" id="btnPlayPause"
+                                    onclick="viewerTogglePause()" title="Play/pause simulation">▶ Play</button>
+                                <button class="btn btn-sm" onclick="viewerSlower()" title="Slow down">-</button>
+                                <button class="btn btn-sm" onclick="viewerFaster()" title="Speed up">+</button>
+                                <button class="btn btn-sm" onclick="viewerReset()" title="Reset to start">↻ Reset</button>
+                                <div class="btn btn-sm font-mono" id="hud-speed">1.0x</div>
                             </div>
                         </div>
 
