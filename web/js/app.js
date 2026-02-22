@@ -724,6 +724,34 @@ function viewerReset() {
 }
 
 // ============================================================
+//  AUTONOMOUS MISSION START
+// ============================================================
+function startMission() {
+    // Gate: Only start if mission exists
+    if (!missionData) {
+        alert('Load a mission first');
+        return;
+    }
+    // Reset sim state to clean start
+    wpIdx = 0; state = 'FLY'; nLoitersDone = 0; distance = 0; battery = 100;
+    energyUsedWh = 0; descentWpIdx = 0; currentAltAGL = DRONE_ALT;
+    pos = { x: missionData.home.x, y: missionData.home.y };
+    heading = 0; trailPoints = []; coveredSet.clear(); paused = false;
+    simTime = 0; speed = 1.0;
+    // Rebuild scene with fresh drone and paths
+    buildScene(missionData);
+    computeSafePath();
+    // Set mission as active
+    missionStarted = true;
+    // Update UI to show playback controls
+    updateHUDVisibility();
+    // Update status
+    setHUD('status', 'FLIGHT');
+    setHUD('phase', 'Autonomous coverage in progress');
+    console.log('[SUPARNA] Mission started: autonomous flight engaged');
+}
+
+// ============================================================
 //  CLICK-TO-RESTRICT ZONES
 // ============================================================
 function toggleRestrictMode() {
