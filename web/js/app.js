@@ -955,6 +955,7 @@ async function loadMission() {
         console.warn('[SUPARNA] No mission:', e.message);
         setHUD('status', 'NO MISSION');
         setHUD('phase', 'Use Mission Planner to generate');
+        updateHUDVisibility();
         return;
     }
     pos = { x: missionData.home.x, y: missionData.home.y };
@@ -966,12 +967,15 @@ async function loadMission() {
     try {
         buildScene(missionData);
         console.log('[SUPARNA] Scene built OK');
+        setHUD('status', 'READY');
+        setHUD('phase', 'Mark zones and click START MISSION');
     } catch (err) {
         console.error('[SUPARNA] Build error:', err);
         setHUD('status', 'BUILD ERROR');
         setHUD('phase', err.message);
     }
     state = 'FLY';
+    updateHUDVisibility();
 }
 
 // ============================================================
