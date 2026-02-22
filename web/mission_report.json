@@ -8,9 +8,9 @@
     "type": "random"
   },
   "coverage": {
-    "loiter_count": 7,
-    "obstacle_count": 14,
-    "waypoint_count": 9
+    "loiter_count": 9,
+    "obstacle_count": 12,
+    "waypoint_count": 11
   },
   "algorithms_used": [
     "Greedy Set Cover (Coverage Planner)",
@@ -25,16 +25,16 @@
     "battery_capacity_wh": 370.0,
     "reserve_wh": 81.4,
     "usable_wh": 288.6,
-    "total_energy_wh": 23.1,
-    "remaining_wh": 346.9,
-    "remaining_pct": 93.8,
-    "total_distance_m": 13958.0,
-    "total_duration_min": 11.0,
+    "total_energy_wh": 27.4,
+    "remaining_wh": 342.6,
+    "remaining_pct": 92.6,
+    "total_distance_m": 16261.0,
+    "total_duration_min": 12.7,
     "energy_by_type": {
       "climb": 2.2,
-      "transit": 2.8,
-      "loiter": 6.2,
-      "rtb": 1.1,
+      "transit": 4.7,
+      "loiter": 8.0,
+      "rtb": 1.7,
       "descent": 10.9
     },
     "phases": [
@@ -48,8 +48,8 @@
       {
         "name": "Transit \u2192 Loiter 1",
         "type": "transit",
-        "distance_m": 70.7,
-        "duration_s": 3.0,
+        "distance_m": 28.3,
+        "duration_s": 1.2,
         "energy_wh": 0.1
       },
       {
@@ -90,9 +90,9 @@
       {
         "name": "Transit \u2192 Loiter 4",
         "type": "transit",
-        "distance_m": 194.5,
-        "duration_s": 8.4,
-        "energy_wh": 0.4
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 4",
@@ -104,9 +104,9 @@
       {
         "name": "Transit \u2192 Loiter 5",
         "type": "transit",
-        "distance_m": 615.1,
-        "duration_s": 26.5,
-        "energy_wh": 1.2
+        "distance_m": 137.5,
+        "duration_s": 5.9,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 5",
@@ -118,9 +118,9 @@
       {
         "name": "Transit \u2192 Loiter 6",
         "type": "transit",
-        "distance_m": 137.5,
-        "duration_s": 5.9,
-        "energy_wh": 0.3
+        "distance_m": 567.1,
+        "duration_s": 24.4,
+        "energy_wh": 1.1
       },
       {
         "name": "Loiter 6",
@@ -144,11 +144,39 @@
         "energy_wh": 0.9
       },
       {
+        "name": "Transit \u2192 Loiter 8",
+        "type": "transit",
+        "distance_m": 869.9,
+        "duration_s": 37.5,
+        "energy_wh": 1.7
+      },
+      {
+        "name": "Loiter 8",
+        "type": "loiter",
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
+      },
+      {
+        "name": "Transit \u2192 Loiter 9",
+        "type": "transit",
+        "distance_m": 275.1,
+        "duration_s": 11.9,
+        "energy_wh": 0.5
+      },
+      {
+        "name": "Loiter 9",
+        "type": "loiter",
+        "distance_m": 493.9,
+        "duration_s": 21.3,
+        "energy_wh": 0.9
+      },
+      {
         "name": "Return to Base",
         "type": "rtb",
-        "distance_m": 550.0,
-        "duration_s": 23.7,
-        "energy_wh": 1.1
+        "distance_m": 867.8,
+        "duration_s": 37.4,
+        "energy_wh": 1.7
       },
       {
         "name": "Loiter-to-Land (16 loops)",
