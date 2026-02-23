@@ -163,6 +163,11 @@ async def download_report():
 
 # === Static Files & SPA ===
 
+# Ensure directories exist before mounting static files
+(WEB_DIR / "css").mkdir(parents=True, exist_ok=True)
+(WEB_DIR / "js").mkdir(parents=True, exist_ok=True)
+(WEB_DIR / "assets").mkdir(parents=True, exist_ok=True)
+
 app.mount("/css", StaticFiles(directory=str(WEB_DIR / "css")), name="css")
 app.mount("/js", StaticFiles(directory=str(WEB_DIR / "js")), name="js")
 app.mount("/assets", StaticFiles(directory=str(WEB_DIR / "assets")), name="assets")
