@@ -388,19 +388,32 @@ function buildScene(data) {
 
     // === Mission elements — only shown after START ===
     if (missionStarted) {
-        // Loiter targets (torus rings + vertical lines)
+        // Loiter targets (tactical ground rings + vertical lines)
         (data.loiters || []).forEach(function (l) {
             var baseH2 = isLAC ? getTerrainHeight(l.x, l.y) : 0;
             var torusH = baseH2 + DRONE_ALT;
+
+            // Ground tactical ring (shows the exact orbit on the ground)
+            var groundRing = new THREE.Mesh(
+                new THREE.RingGeometry(l.radius - 2, l.radius, 64),
+                new THREE.MeshBasicMaterial({ color: 0xff3366, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+            );
+            groundRing.rotation.x = -Math.PI / 2;
+            groundRing.position.set(l.x, baseH2 + 2, l.y);
+            scene.add(groundRing); loiterMeshes.push(groundRing);
+
+            // Floating drone altitude ring
             var torus = new THREE.Mesh(
                 new THREE.TorusGeometry(l.radius, isLAC ? 3 : 1.5, 8, 48),
-                new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.5 })
+                new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.6 })
             );
             torus.rotation.x = -Math.PI / 2; torus.position.set(l.x, torusH, l.y);
             scene.add(torus); loiterMeshes.push(torus);
+
+            // Vertical beam
             var vl = new THREE.Line(
                 new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(l.x, baseH2, l.y), new THREE.Vector3(l.x, torusH, l.y)]),
-                new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.25 })
+                new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.3 })
             );
             scene.add(vl); loiterMeshes.push(vl);
         });
@@ -425,21 +438,22 @@ function buildScene(data) {
         droneMesh.position.set(data.home.x, homeH + DRONE_ALT, data.home.y);
         scene.add(droneMesh);
 
-        // Trail
-        trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00a0c0, transparent: true, opacity: 0.6 }));
+        // Trail (what's already flown)
+        trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.8, linewidth: 2 }));
         scene.add(trailLine);
 
-        // Path preview (dashed line)
+        // Path preview (Vibrant glowing line for the upcoming planned path)
         var pts = safeWaypoints.map(function (w) {
             var bh = isLAC ? getTerrainHeight(w.x, w.y) : 0;
             return new THREE.Vector3(w.x, bh + DRONE_ALT - 2, w.y);
         });
         if (pts.length > 1) {
+            // Laid-ahead glowing trajectory
             var pl = new THREE.Line(
                 new THREE.BufferGeometry().setFromPoints(pts),
-                new THREE.LineDashedMaterial({ color: 0x2a4060, dashSize: isLAC ? 30 : 10, gapSize: isLAC ? 30 : 10, transparent: true, opacity: 0.35 })
+                new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.65 })
             );
-            pl.computeLineDistances(); scene.add(pl); allSceneObjects.push(pl);
+            scene.add(pl); allSceneObjects.push(pl);
         }
 
         // Descent preview
@@ -684,10 +698,20 @@ function updateHUD() {
 
     // Loiter color updates
     (missionData.loiters || []).forEach(function (l, i) {
-        var mesh = loiterMeshes[i * 2];
-        if (!mesh) return;
-        if (i < nLoitersDone) { mesh.material.color.set(0x1db954); mesh.material.opacity = 0.7; }
-        else if (i === nLoitersDone && state === 'LOITER') { mesh.material.color.set(0x00d4ff); mesh.material.opacity = 0.8; }
+        var groundRing = loiterMeshes[i * 3];
+        var torus = loiterMeshes[i * 3 + 1];
+        var vl = loiterMeshes[i * 3 + 2];
+        if (!torus) return;
+
+        if (i < nLoitersDone) {
+            torus.material.color.set(0x1db954); torus.material.opacity = 0.7;
+            groundRing.material.color.set(0x1db954); groundRing.material.opacity = 0.2;
+            vl.material.color.set(0x1db954);
+        } else if (i === nLoitersDone && state === 'LOITER') {
+            torus.material.color.set(0x00d4ff); torus.material.opacity = 0.8;
+            groundRing.material.color.set(0x00d4ff); groundRing.material.opacity = 0.5;
+            vl.material.color.set(0x00d4ff);
+        }
     });
 }
 
@@ -699,6 +723,17 @@ function animate() {
     var dt = 1 / 60; simTime += dt;
     if (missionStarted && !paused) {
         for (var i = 0; i < Math.ceil(speed * 2); i++) updateSim(dt * 0.5);
+
+        // Tactical pulsing animation for ground rings
+        var t = performance.now() / 400; // Speed of pulse
+        (missionData.loiters || []).forEach(function (l, i) {
+            var groundRing = loiterMeshes[i * 3];
+            if (groundRing) {
+                // Pulse scale between 0.95 and 1.15
+                var scale = 1.05 + 0.10 * Math.sin(t + i);
+                groundRing.scale.set(scale, scale, 1);
+            }
+        });
     }
     if (controls) controls.update();
     updateHUD();
