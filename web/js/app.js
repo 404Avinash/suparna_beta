@@ -94,34 +94,45 @@ function initViewer() {
     if (!container) return;
 
     scene = new THREE.Scene();
-    scene.background = new THREE.Color(0x0a0e17);
+    scene.background = new THREE.Color(0x05080f); // Darker, richer background
+    scene.fog = new THREE.FogExp2(0x05080f, 0.00015); // Add global exponential fog for depth
 
     var w = container.clientWidth || window.innerWidth - 72;
     var h = container.clientHeight || window.innerHeight - 56;
 
-    camera = new THREE.PerspectiveCamera(50, w / h, 1, 20000);
+    camera = new THREE.PerspectiveCamera(45, w / h, 10, 30000); // Tighter FOV for cinematic look
     camera.position.set(600, 500, 600);
 
-    renderer = new THREE.WebGLRenderer({ antialias: true });
+    // Advanced Renderer Settings
+    renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: "high-performance" });
     renderer.setSize(w, h);
     renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping; // Cinematic color grading
+    renderer.toneMappingExposure = 1.1;
     renderer.shadowMap.enabled = true;
-    renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+    renderer.shadowMap.type = THREE.PCFSoftShadowMap; // High quality soft shadows
     container.appendChild(renderer.domElement);
 
     controls = new THREE.OrbitControls(camera, renderer.domElement);
-    controls.enableDamping = true; controls.dampingFactor = 0.08;
-    controls.maxPolarAngle = Math.PI / 2.1;
+    controls.enableDamping = true; controls.dampingFactor = 0.05; // Smoother panning
+    controls.maxPolarAngle = Math.PI / 2.05; // Less extreme ground angle
 
-    scene.add(new THREE.AmbientLight(0x334466, 0.6));
-    var dl = new THREE.DirectionalLight(0xffffff, 0.8);
-    dl.position.set(2000, 3000, 1500); dl.castShadow = true;
-    dl.shadow.camera.near = 1; dl.shadow.camera.far = 10000;
-    dl.shadow.camera.left = -3000; dl.shadow.camera.right = 3000;
-    dl.shadow.camera.top = 3000; dl.shadow.camera.bottom = -3000;
-    dl.shadow.mapSize.set(2048, 2048);
+    // Cinematic Lighting Setup
+    scene.add(new THREE.AmbientLight(0x1a2235, 0.8)); // Subtle blue ambient light
+
+    var dl = new THREE.DirectionalLight(0xfff0e6, 1.5); // Warm sun light
+    dl.position.set(3000, 4000, 2000);
+    dl.castShadow = true;
+    dl.shadow.camera.near = 100; dl.shadow.camera.far = 15000;
+    dl.shadow.camera.left = -4000; dl.shadow.camera.right = 4000;
+    dl.shadow.camera.top = 4000; dl.shadow.camera.bottom = -4000;
+    dl.shadow.mapSize.set(4096, 4096); // Ultra crisp shadows
+    dl.shadow.bias = -0.0005;
     scene.add(dl);
-    scene.add(new THREE.HemisphereLight(0x88aacc, 0x443322, 0.4));
+
+    var fillLight = new THREE.DirectionalLight(0x4060ff, 0.6); // Cool blue fill light
+    fillLight.position.set(-2000, 1000, -2000);
+    scene.add(fillLight);
 
     window.addEventListener('resize', onResize);
     viewerInitialized = true;
