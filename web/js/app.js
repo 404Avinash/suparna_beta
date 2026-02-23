@@ -4,9 +4,8 @@
  */
 
 // === API Configuration ===
-var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
-    ? 'http://127.0.0.1:8000'
-    : 'https://suparna-api.onrender.com'; // Change to your deployed backend URL
+// Use relative paths for all API calls so it works automatically on localhost and Render
+var API_BASE_URL = '';
 
 // === Error overlay ===
 window.onerror = function (msg, url, line) {
@@ -871,7 +870,7 @@ async function startMission() {
         });
         var result = await resp.json();
         if (btn) { btn.disabled = false; }
-        
+
         if (result.success) {
             console.log('[SUPARNA] Mission generated successfully');
             // Load the newly generated mission.json
@@ -893,7 +892,7 @@ async function startMission() {
             // Activate mission
             missionStarted = true;
             // Update UI
-            if (btn) { 
+            if (btn) {
                 btn.textContent = '✈️ FLYING';
                 btn.style.background = 'rgba(29,185,84,0.2)';
                 btn.style.borderColor = '#1db954';
@@ -907,9 +906,9 @@ async function startMission() {
             alert('Mission planning failed: ' + (result.detail || 'Unknown error'));
         }
     } catch (e) {
-        if (btn) { 
-            btn.textContent = '🚀 START MISSION'; 
-            btn.disabled = false; 
+        if (btn) {
+            btn.textContent = '🚀 START MISSION';
+            btn.disabled = false;
         }
         console.error('[SUPARNA] Mission generation error:', e);
         alert('Mission planning failed: ' + e.message);
