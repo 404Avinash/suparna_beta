@@ -195,9 +195,11 @@ async def serve_spa(path: str = ""):
 
 if __name__ == "__main__":
     import uvicorn
+    import os
+    
     parser = argparse.ArgumentParser(description="SUPARNA Mission Control Server")
-    parser.add_argument("--port", type=int, default=8000, help="Port (default 8000)")
-    parser.add_argument("--host", type=str, default="127.0.0.1")
+    parser.add_argument("--port", type=int, default=int(os.getenv("PORT", 8000)), help="Port (default 8000)")
+    parser.add_argument("--host", type=str, default="0.0.0.0")
     args = parser.parse_args()
 
     # Ensure directories exist
@@ -206,5 +208,5 @@ if __name__ == "__main__":
     (WEB_DIR / "assets").mkdir(parents=True, exist_ok=True)
 
     print(f"\n  SUPARNA Mission Control")
-    print(f"  http://{args.host}:{args.port}\n")
+    print(f"  Running on port {args.port}\n")
     uvicorn.run(app, host=args.host, port=args.port, log_level="info")

@@ -3,6 +3,11 @@
  * Merged from proven working index.html viewer + SPA framework
  */
 
+// === API Configuration ===
+var API_BASE_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1' 
+    ? 'http://127.0.0.1:8000'
+    : 'https://suparna-api.onrender.com'; // Change to your deployed backend URL
+
 // === Error overlay ===
 window.onerror = function (msg, url, line) {
     var o = document.getElementById('_dbg') || (function () {
@@ -853,7 +858,7 @@ async function startMission() {
 
     try {
         console.log('[SUPARNA] Calling /api/mission/generate with zones:', zones.length);
-        var resp = await fetch('/api/mission/generate', {
+        var resp = await fetch(API_BASE_URL + '/api/mission/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -995,7 +1000,7 @@ async function updateISAPreview(alt) {
     var el = document.getElementById('isaData');
     if (!el) return;
     try {
-        var resp = await fetch('/api/performance/' + alt);
+        var resp = await fetch(API_BASE_URL + '/api/performance/' + alt);
         if (!resp.ok) throw new Error();
         var d = await resp.json();
         el.innerHTML = '<b>Cruise:</b> ' + d.cruise_speed_ms + ' m/s<br><b>Power:</b> ' + d.power_draw_w + ' W<br><b>Loiter R:</b> ' + d.loiter_radius_m + ' m<br><b>Density:</b> ' + d.air_density + ' kg/m\u00B3 (\u03C3=' + d.density_ratio + ')';
@@ -1010,7 +1015,7 @@ async function generateMission() {
     var body = { map_type: mapType, altitude_m: alt };
     if (seedEl && seedEl.value) body.seed = parseInt(seedEl.value);
     try {
-        var resp = await fetch('/api/mission/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+        var resp = await fetch(API_BASE_URL + '/api/mission/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
         var result = await resp.json();
         if (btn) { btn.textContent = 'Generate Mission'; btn.disabled = false; }
         if (result.success) {
@@ -1128,7 +1133,7 @@ async function updateExportsPage() {
     if (isaBody) {
         var alts = [0, 1000, 2000, 3000, 4000, 5000], rows = '';
         for (var i = 0; i < alts.length; i++) {
-            try { var r = await fetch('/api/performance/' + alts[i]); if (r.ok) { var d = await r.json(); var hl = (alts[i] === (missionData.altitude_m || 0)) ? ' style="color:var(--accent);font-weight:700"' : ''; rows += '<tr' + hl + '><td class="font-mono">' + alts[i] + 'm</td><td>' + d.cruise_speed_ms + '</td><td>' + d.power_draw_w + '</td><td>' + d.loiter_radius_m + '</td><td>' + d.stall_speed_ms + '</td></tr>'; } } catch (e) { }
+            try { var r = await fetch(API_BASE_URL + '/api/performance/' + alts[i]); if (r.ok) { var d = await r.json(); var hl = (alts[i] === (missionData.altitude_m || 0)) ? ' style="color:var(--accent);font-weight:700"' : ''; rows += '<tr' + hl + '><td class="font-mono">' + alts[i] + 'm</td><td>' + d.cruise_speed_ms + '</td><td>' + d.power_draw_w + '</td><td>' + d.loiter_radius_m + '</td><td>' + d.stall_speed_ms + '</td></tr>'; } } catch (e) { }
         }
         isaBody.innerHTML = rows || '<tr><td colspan="5" style="color:var(--text-muted)">Start server for ISA data</td></tr>';
     }
@@ -1248,7 +1253,7 @@ async function updateISAPreview(alt) {
     var el = document.getElementById('isaData');
     if (!el) return;
     try {
-        var resp = await fetch('/api/performance/' + alt);
+        var resp = await fetch(API_BASE_URL + '/api/performance/' + alt);
         if (!resp.ok) throw new Error();
         var d = await resp.json();
         el.innerHTML =
@@ -1278,7 +1283,7 @@ async function generateMission() {
         : lat.toFixed(4) + '°N, ' + lon.toFixed(4) + '°E';
 
     try {
-        var resp = await fetch('/api/mission/generate', {
+        var resp = await fetch(API_BASE_URL + '/api/mission/generate', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(body)
