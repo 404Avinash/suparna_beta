@@ -8,9 +8,9 @@
     "type": "random"
   },
   "coverage": {
-    "loiter_count": 9,
-    "obstacle_count": 12,
-    "waypoint_count": 11
+    "loiter_count": 8,
+    "obstacle_count": 9,
+    "waypoint_count": 10
   },
   "algorithms_used": [
     "Greedy Set Cover (Coverage Planner)",
@@ -25,172 +25,158 @@
     "battery_capacity_wh": 370.0,
     "reserve_wh": 81.4,
     "usable_wh": 288.6,
-    "total_energy_wh": 27.4,
-    "remaining_wh": 342.6,
-    "remaining_pct": 92.6,
-    "total_distance_m": 16261.0,
-    "total_duration_min": 12.7,
+    "total_energy_wh": 26.8,
+    "remaining_wh": 343.2,
+    "remaining_pct": 92.8,
+    "total_distance_m": 16015.0,
+    "total_duration_min": 11.5,
     "energy_by_type": {
-      "climb": 2.2,
-      "transit": 4.7,
-      "loiter": 8.0,
-      "rtb": 1.7,
-      "descent": 10.9
+      "climb": 2.4,
+      "transit": 3.4,
+      "loiter": 8.3,
+      "rtb": 1.6,
+      "descent": 11.1
     },
     "phases": [
       {
         "name": "Climb to altitude",
         "type": "climb",
-        "distance_m": 618.7,
+        "distance_m": 672.0,
         "duration_s": 26.7,
-        "energy_wh": 2.2
+        "energy_wh": 2.4
       },
       {
         "name": "Transit \u2192 Loiter 1",
         "type": "transit",
-        "distance_m": 28.3,
-        "duration_s": 1.2,
+        "distance_m": 46.6,
+        "duration_s": 1.8,
         "energy_wh": 0.1
       },
       {
         "name": "Loiter 1",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 2",
         "type": "transit",
-        "distance_m": 137.5,
-        "duration_s": 5.9,
+        "distance_m": 161.7,
+        "duration_s": 6.4,
         "energy_wh": 0.3
       },
       {
         "name": "Loiter 2",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 3",
         "type": "transit",
-        "distance_m": 137.5,
-        "duration_s": 5.9,
-        "energy_wh": 0.3
+        "distance_m": 228.7,
+        "duration_s": 9.1,
+        "energy_wh": 0.4
       },
       {
         "name": "Loiter 3",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 4",
         "type": "transit",
-        "distance_m": 137.5,
-        "duration_s": 5.9,
-        "energy_wh": 0.3
+        "distance_m": 361.6,
+        "duration_s": 14.3,
+        "energy_wh": 0.7
       },
       {
         "name": "Loiter 4",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 5",
         "type": "transit",
-        "distance_m": 137.5,
-        "duration_s": 5.9,
-        "energy_wh": 0.3
+        "distance_m": 323.4,
+        "duration_s": 12.8,
+        "energy_wh": 0.6
       },
       {
         "name": "Loiter 5",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 6",
         "type": "transit",
-        "distance_m": 567.1,
-        "duration_s": 24.4,
-        "energy_wh": 1.1
+        "distance_m": 161.7,
+        "duration_s": 6.4,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 6",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 7",
         "type": "transit",
-        "distance_m": 137.5,
-        "duration_s": 5.9,
-        "energy_wh": 0.3
+        "distance_m": 323.4,
+        "duration_s": 12.8,
+        "energy_wh": 0.6
       },
       {
         "name": "Loiter 7",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Transit \u2192 Loiter 8",
         "type": "transit",
-        "distance_m": 869.9,
-        "duration_s": 37.5,
-        "energy_wh": 1.7
+        "distance_m": 161.7,
+        "duration_s": 6.4,
+        "energy_wh": 0.3
       },
       {
         "name": "Loiter 8",
         "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
-      },
-      {
-        "name": "Transit \u2192 Loiter 9",
-        "type": "transit",
-        "distance_m": 275.1,
-        "duration_s": 11.9,
-        "energy_wh": 0.5
-      },
-      {
-        "name": "Loiter 9",
-        "type": "loiter",
-        "distance_m": 493.9,
-        "duration_s": 21.3,
-        "energy_wh": 0.9
+        "distance_m": 580.6,
+        "duration_s": 23.0,
+        "energy_wh": 1.0
       },
       {
         "name": "Return to Base",
         "type": "rtb",
-        "distance_m": 867.8,
-        "duration_s": 37.4,
-        "energy_wh": 1.7
+        "distance_m": 801.4,
+        "duration_s": 31.8,
+        "energy_wh": 1.6
       },
       {
-        "name": "Loiter-to-Land (16 loops)",
+        "name": "Loiter-to-Land (14 loops)",
         "type": "descent",
-        "distance_m": 7901.7,
-        "duration_s": 400.7,
-        "energy_wh": 10.9
+        "distance_m": 8127.9,
+        "duration_s": 379.5,
+        "energy_wh": 11.1
       }
     ]
   },
   "landing": {
     "type": "Loiter-to-Land Spiral Descent",
-    "loops": 13,
+    "loops": 12,
     "start_altitude_m": 80,
-    "energy_wh": 9.3
+    "energy_wh": 10.1
   }
 }
