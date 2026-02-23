@@ -196,6 +196,7 @@ async def serve_spa(path: str = ""):
 if __name__ == "__main__":
     import uvicorn
     import os
+    import argparse
     
     parser = argparse.ArgumentParser(description="SUPARNA Mission Control Server")
     parser.add_argument("--port", type=int, default=int(os.getenv("PORT", 8000)), help="Port (default 8000)")
