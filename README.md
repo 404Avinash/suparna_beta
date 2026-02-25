@@ -1,5 +1,9 @@
 <div align="center">
 
+<img src="assets/suparna_hero.png" alt="Suparna Hero Banner" width="100%" style="border-radius: 10px;" />
+
+<br/><br/>
+
 <img src="https://img.shields.io/badge/🦅_SUPARNA-Swift--Inspired_Fixed--Wing_UAS-0a1628?style=for-the-badge&labelColor=0a1628" alt="Suparna" />
 
 <br/><br/>
@@ -8,6 +12,8 @@
 [![iDEX](https://img.shields.io/badge/iDEX_OPEN_CHALLENGE-PROPOSAL-cyan?style=flat-square&labelColor=1a1a2e)](#)
 [![Status](https://img.shields.io/badge/STATUS-PCCE_SIMULATION_READY-00ff88?style=flat-square&labelColor=1a1a2e)](#)
 [![2025](https://img.shields.io/badge/YEAR-2025-white?style=flat-square&labelColor=1a1a2e)](#)
+[![Repo Size](https://img.shields.io/github/repo-size/404Avinash/suparna_beta?style=flat-square&labelColor=1a1a2e&color=c084fc)](#)
+[![Last Commit](https://img.shields.io/github/last-commit/404Avinash/suparna_beta?style=flat-square&labelColor=1a1a2e&color=ff9f43)](#)
 
 <br/>
 
@@ -21,6 +27,17 @@ Inspired by the **Common Swift** (*Apus apus*)—a bird that sustains unbroken f
 ---
 
 </div>
+
+<br/>
+
+## 📑 Table of Contents
+
+- [⚡ The Problem: The High Cost of Hover](#-the-problem-the-high-cost-of-hover)
+- [🦅 The SUPARNA Solution](#-the-suparna-solution)
+- [⚙️ System Specifications](#️-system-specifications)
+- [💻 The Repository: PCCE Software Stack](#-the-repository-pcce-software-stack)
+- [🚀 Quick Start (Simulation)](#-quick-start-simulation)
+- [📁 Repository Structure](#-repository-structure)
 
 <br/>
 
@@ -121,23 +138,24 @@ SUPARNA tackles the challenge at the airframe level. Derived from the *Common Sw
 
 ### Key Innovations
 
-<details open>
-<summary><b>1. Physics-Constrained Coverage Engine (PCCE)</b></summary>
-<br>
-By encoding <em>forward-flight-only</em> as a hard physical reality, the PCCE never even considers hovering, sharp yaw corrections, or rapid 90° turns. The search space collapses, allowing rapid <code>O(1)</code> Dubins Curve transit generation and <code>O(k)</code> Greedy Set Cover placed loiters.
-</details>
+> **👉 Interactive Feature Grid**
 
-<details open>
-<summary><b>2. Loiter-to-Land</b></summary>
-<br>
-Most fixed-wing platforms require a runway or parachute. SUPARNA uses its own observation circle as the landing pattern. When the mission ends, it spirals inside the same circle, descending 3–5m per loop until belly touchdown. Every loiter zone is a potential recovery point.
-</details>
-
-<details>
-<summary><b>3. High-Altitude Persistence</b></summary>
-<br>
-At 4,000m AMSL (Ladakh), traditional rotorcraft endurance plummets to 15-20 mins. <strong>SUPARNA delivers 2.65 hours at 4,000m AMSL</strong> (vs. 3.25 hrs at sea level).
-</details>
+<table>
+  <tr>
+    <td width="33%" align="center">
+      <h3>🧬 PCCE Planner</h3>
+      <p>By encoding <em>forward-flight-only</em> as a hard physical limitation, the algorithm collapses the search space, allowing <code>O(1)</code> Dubins transits and rapid Greedy set covers.</p>
+    </td>
+    <td width="33%" align="center">
+      <h3>🎯 Loiter-to-Land</h3>
+      <p>Landing inside the observation circle. The drone spirals down 3-5m per loop until belly touchdown. Any loiter zone is a potential recovery site. No parachute. No runway.</p>
+    </td>
+    <td width="33%" align="center">
+      <h3>🏔️ High-Altitude</h3>
+      <p>At 4,000m AMSL (like in Ladakh), traditional rotorcraft endurance plummets. <strong>SUPARNA delivers 2.65 hours at 4,000m</strong>, fundamentally changing tactical surveillance.</p>
+    </td>
+  </tr>
+</table>
 
 ---
 
@@ -188,6 +206,16 @@ The algorithm yields optimal coverage efficiently via:
 
 You can run the simulated drone and PCCE path visualizer out-of-the-box.
 
+> [!TIP]
+> **Action In-Simulation:** Watch how the drone strictly avoids hovering, opting instead for Dubins curve transitions and continuous circular sweeps across the terrain.
+
+<div align="center">
+  <br>
+  <i>(Replace this placeholder segment with a GIF/Video recording of <code>main.py</code> running)</i><br>
+  <img src="https://placehold.co/800x400/1a1a1a/00ff88?text=Simulation+Preview+GIF" alt="Simulation Placeholder" width="800" style="border-radius:8px;" />
+  <br><br>
+</div>
+
 ```bash
 # Clone
 git clone https://github.com/404Avinash/suparna_beta.git
@@ -221,6 +249,7 @@ python export_mission.py --map lac --seed 42
 
 ```text
 📦 suparna_beta
+ ┣ 📂 assets                      # Hero banners and media
  ┣ 📜 main.py                     # Simulator Entry point
  ┣ 📜 export_mission.py           # Generate mission & export JSON
  ┣ 📜 PROJECT_ARCHITECTURE.md     # Detailed software architecture & algorithms
