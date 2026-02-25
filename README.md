@@ -223,7 +223,6 @@ python export_mission.py --map lac --seed 42
 📦 suparna_beta
  ┣ 📜 main.py                     # Simulator Entry point
  ┣ 📜 export_mission.py           # Generate mission & export JSON
- ┣ 📜 IDEX_PROPOSAL.md            # Read the full project hardware proposal
  ┣ 📜 PROJECT_ARCHITECTURE.md     # Detailed software architecture & algorithms
  ┗ 📂 src
    ┣ 📂 core                      # Geometric utils, Dubins algorithms
