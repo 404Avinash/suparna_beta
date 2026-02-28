@@ -354,8 +354,6 @@ function buildScene(data) {
         addCustomObstMeshAt(co.x, co.y, co.radius);
     });
 
-    // (Pre-built map obstacles are hidden — the user marks their own restricted zones)
-
     // Landmarks (dict format) — always show for context
     if (isLAC && data.landmarks) {
         var lmKeys = Array.isArray(data.landmarks) ? null : Object.keys(data.landmarks);
@@ -397,38 +395,51 @@ function buildScene(data) {
         scene.add(homeLbl); labelSprites.push(homeLbl);
     }
 
-    // === Mission elements — only shown after START ===
+    // === Loiter circles (always visible — path optimization preview) ===
+    (data.loiters || []).forEach(function (l) {
+        var baseH2 = isLAC ? getTerrainHeight(l.x, l.y) : 0;
+        var torusH = baseH2 + DRONE_ALT;
+
+        // Ground tactical ring (shows the exact orbit on the ground)
+        var groundRing = new THREE.Mesh(
+            new THREE.RingGeometry(l.radius - 2, l.radius, 64),
+            new THREE.MeshBasicMaterial({ color: 0xff3366, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
+        );
+        groundRing.rotation.x = -Math.PI / 2;
+        groundRing.position.set(l.x, baseH2 + 2, l.y);
+        scene.add(groundRing); loiterMeshes.push(groundRing);
+
+        // Floating drone altitude ring (orange)
+        var torus = new THREE.Mesh(
+            new THREE.TorusGeometry(l.radius, isLAC ? 3 : 1.5, 8, 48),
+            new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.6 })
+        );
+        torus.rotation.x = -Math.PI / 2; torus.position.set(l.x, torusH, l.y);
+        scene.add(torus); loiterMeshes.push(torus);
+
+        // Vertical beam connecting ground to altitude ring
+        var vl = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(l.x, baseH2, l.y), new THREE.Vector3(l.x, torusH, l.y)]),
+            new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.3 })
+        );
+        scene.add(vl); loiterMeshes.push(vl);
+    });
+
+    // === Path preview (always visible — optimized route) ===
+    var pathPts = safeWaypoints.map(function (w) {
+        var bh = isLAC ? getTerrainHeight(w.x, w.y) : 0;
+        return new THREE.Vector3(w.x, bh + DRONE_ALT - 2, w.y);
+    });
+    if (pathPts.length > 1) {
+        var pathLine = new THREE.Line(
+            new THREE.BufferGeometry().setFromPoints(pathPts),
+            new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.5 })
+        );
+        scene.add(pathLine); allSceneObjects.push(pathLine);
+    }
+
+    // === Active flight elements — only shown after START ===
     if (missionStarted) {
-        // Loiter targets (tactical ground rings + vertical lines)
-        (data.loiters || []).forEach(function (l) {
-            var baseH2 = isLAC ? getTerrainHeight(l.x, l.y) : 0;
-            var torusH = baseH2 + DRONE_ALT;
-
-            // Ground tactical ring (shows the exact orbit on the ground)
-            var groundRing = new THREE.Mesh(
-                new THREE.RingGeometry(l.radius - 2, l.radius, 64),
-                new THREE.MeshBasicMaterial({ color: 0xff3366, transparent: true, opacity: 0.4, side: THREE.DoubleSide })
-            );
-            groundRing.rotation.x = -Math.PI / 2;
-            groundRing.position.set(l.x, baseH2 + 2, l.y);
-            scene.add(groundRing); loiterMeshes.push(groundRing);
-
-            // Floating drone altitude ring
-            var torus = new THREE.Mesh(
-                new THREE.TorusGeometry(l.radius, isLAC ? 3 : 1.5, 8, 48),
-                new THREE.MeshBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.6 })
-            );
-            torus.rotation.x = -Math.PI / 2; torus.position.set(l.x, torusH, l.y);
-            scene.add(torus); loiterMeshes.push(torus);
-
-            // Vertical beam
-            var vl = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints([new THREE.Vector3(l.x, baseH2, l.y), new THREE.Vector3(l.x, torusH, l.y)]),
-                new THREE.LineBasicMaterial({ color: 0xffb040, transparent: true, opacity: 0.3 })
-            );
-            scene.add(vl); loiterMeshes.push(vl);
-        });
-
         // Drone
         var dg = new THREE.Group();
         var body = new THREE.Mesh(
@@ -452,20 +463,6 @@ function buildScene(data) {
         // Trail (what's already flown)
         trailLine = new THREE.Line(new THREE.BufferGeometry(), new THREE.LineBasicMaterial({ color: 0x00d4ff, transparent: true, opacity: 0.8, linewidth: 2 }));
         scene.add(trailLine);
-
-        // Path preview (Vibrant glowing line for the upcoming planned path)
-        var pts = safeWaypoints.map(function (w) {
-            var bh = isLAC ? getTerrainHeight(w.x, w.y) : 0;
-            return new THREE.Vector3(w.x, bh + DRONE_ALT - 2, w.y);
-        });
-        if (pts.length > 1) {
-            // Laid-ahead glowing trajectory
-            var pl = new THREE.Line(
-                new THREE.BufferGeometry().setFromPoints(pts),
-                new THREE.LineBasicMaterial({ color: 0x00e5ff, transparent: true, opacity: 0.65 })
-            );
-            scene.add(pl); allSceneObjects.push(pl);
-        }
 
         // Descent preview
         buildDescentPreview(data);
